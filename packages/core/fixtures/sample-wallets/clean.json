@@ -1,0 +1,31 @@
+{
+  "name": "clean",
+  "description": "Fictional fresh wallet with no exposure findings.",
+  "wallets": [
+    {
+      "chain": "base",
+      "address": "0x157bfbecd023fd6384dad2bded5dad7e27bf92e4",
+      "label": "fresh"
+    }
+  ],
+  "accounts": {
+    "0x157bfbecd023fd6384dad2bded5dad7e27bf92e4": {
+      "chain": "base",
+      "balanceWei": "750000000000000000",
+      "nonce": 0,
+      "ensName": null,
+      "transactions": [
+        {
+          "hash": "0x9e93753141b29350b984c354ab8436093c74bebb076872bad623065867fddf13",
+          "chain": "base",
+          "from": "0xa01cca6367a84304b6607b76676c66c360b74741",
+          "to": "0x157bfbecd023fd6384dad2bded5dad7e27bf92e4",
+          "valueWei": "750000000000000000",
+          "timestamp": 1760472000
+        }
+      ],
+      "tokenTransfers": [],
+      "approvals": []
+    }
+  }
+}

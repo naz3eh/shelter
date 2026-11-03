@@ -3,12 +3,15 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "bin": { "shelter": "./src/index.ts" },
+  "bin": {
+    "shelter": "./src/index.ts"
+  },
   "scripts": {
     "start": "tsx src/index.ts",
     "demo": "tsx src/demo.ts",
     "verify-attestation": "tsx src/verify-attestation.ts",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json",
+    "scan": "tsx src/index.ts scan"
   },
   "dependencies": {
     "@shelter/attest": "workspace:*",
