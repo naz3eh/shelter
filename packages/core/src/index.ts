@@ -1,24 +1,13 @@
 /** Exposure engine, planner, and address book. */
 
-export type ChainId = "base" | "ethereum" | (string & {});
+import type { ExposureReport } from "./exposure/engine.js";
+
+export type ChainId = "base" | "ethereum" | "near" | (string & {});
 
 export interface WalletRef {
   chain: ChainId;
   address: string;
   label?: string;
-}
-
-export interface ExposureFinding {
-  kind: "cex-link" | "ens" | "reused-address" | "large-balance" | "public-counterparty" | (string & {});
-  weight: number;
-  detail: string;
-}
-
-export interface ExposureReport {
-  wallet: WalletRef;
-  /** 0 (private) to 100 (fully exposed). */
-  score: number;
-  findings: ExposureFinding[];
 }
 
 export interface PlanStep {
@@ -29,10 +18,6 @@ export interface PlanStep {
 export interface RemediationPlan {
   wallet: WalletRef;
   steps: PlanStep[];
-}
-
-export function scoreExposure(_wallet: WalletRef): Promise<ExposureReport> {
-  throw new Error("not implemented");
 }
 
 export function planRemediation(_report: ExposureReport): RemediationPlan {
@@ -53,3 +38,44 @@ export function createAddressBook(): AddressBook {
     remove: (a) => void entries.delete(a.toLowerCase()),
   };
 }
+
+export {
+  bandForScore,
+  CHECK_CONFIDENCE,
+  CHECKS,
+  scanWallets,
+} from "./exposure/engine.js";
+export type {
+  CheckId,
+  ExposureBand,
+  ExposureFinding,
+  ExposureReport,
+  FindingEvidence,
+  ScanOptions,
+  ScanReport,
+  ScanWarning,
+} from "./exposure/engine.js";
+export { buildLinkGraph } from "./graph/index.js";
+export type {
+  GraphEdge,
+  GraphNode,
+  GraphWalletData,
+  LinkGraph,
+} from "./graph/index.js";
+export { createLabelStore } from "./labels/index.js";
+export type { LabelStore } from "./labels/index.js";
+export {
+  BlockscoutClient,
+  createChainReader,
+  FixtureReader,
+} from "./reader/index.js";
+export type {
+  ApprovalRecord,
+  ChainReader,
+  ChainReaderConfig,
+  FixtureAccount,
+  FixtureProfile,
+  NearAccountInfo,
+  TokenTransferRecord,
+  TxRecord,
+} from "./reader/index.js";
