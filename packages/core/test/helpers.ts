@@ -14,7 +14,7 @@ export const a = (n: number) =>
 
 export const a2 = (n: number) => `0x${n.toString(16).padStart(40, "f")}`;
 
-const readJson = (rel: string) =>
+export const readJson = (rel: string) =>
   JSON.parse(
     readFileSync(fileURLToPath(new URL(rel, import.meta.url)), "utf8"),
   ) as never;

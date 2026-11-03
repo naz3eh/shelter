@@ -197,11 +197,12 @@ function makeFinding(
 }
 
 /**
- * Per-wallet score: each check contributes at most weight x confidence,
- * however many instances of it fired on that wallet. Firing A or B floors
- * the wallet at 50.
+ * Set score: each check contributes at most weight x confidence ONCE for the
+ * whole wallet set (the max confidence across all findings of that check).
+ * Firing A or B on any wallet floors the set score at 50. Secondary detail:
+ * the same rule applied per wallet produces each wallet's own score.
  */
-function walletScore(findings: ExposureFinding[]): number {
+function checkDedupedScore(findings: ExposureFinding[]): number {
   const byCheck = new Map<CheckId, number>();
   for (const f of findings) {
     byCheck.set(f.check, Math.max(byCheck.get(f.check) ?? 0, f.points));
@@ -535,17 +536,11 @@ export async function scanWallets(
   const perWallet: ExposureReport[] = data.map((d) => {
     const f = findings.filter((x) => x.wallet === d.addr);
     const w = warnings.filter((x) => x.wallet === d.addr);
-    const score = walletScore(f);
+    const score = checkDedupedScore(f);
     return { wallet: d.wallet, score, band: bandForScore(score), findings: f, warnings: w };
   });
 
-  // The set score is the sum of per-wallet scores, capped at 100.
-  const score = round2(
-    Math.min(
-      SCORE_CAP,
-      perWallet.reduce((s, w) => s + w.score, 0),
-    ),
-  );
+  const score = checkDedupedScore(findings);
   return {
     score,
     band: bandForScore(score),

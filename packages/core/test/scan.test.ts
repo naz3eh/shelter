@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { FixtureReader } from "../src/reader/fixture.js";
 import { bandForScore } from "../src/exposure/engine.js";
-import { a, a2, checks, EXCHANGE_ADDR, eth, OFAC_ADDR, profile, scan, T, tx } from "./helpers.js";
+import { a, a2, checks, EXCHANGE_ADDR, eth, OFAC_ADDR, profile, readJson, scan, T, tx } from "./helpers.js";
 
 const W1 = a(1);
 const W2 = a(2);
@@ -313,9 +313,39 @@ describe("scoring", () => {
     expect(r.band).toBe("identifiable");
   });
 
-  it("caps the score at 100", async () => {
-    // A(25)+B(20)+C(15)+D(15)+E(10)+F(5)+I(3) would be 93 raw; add more
-    // wallets with A to try to exceed it.
+  it("dedupes each check once for the set: two wallets with only F score 5", async () => {
+    const r = await scan(
+      profile({
+        [W1]: { chain: "ethereum", nonce: 2 },
+        [W2]: { chain: "ethereum", nonce: 4 },
+      }),
+    );
+    expect(r.findings.filter((f) => f.check === "F")).toHaveLength(2);
+    expect(r.score).toBe(5);
+  });
+
+  it("floors at 50 when A fires on one wallet and B on another", async () => {
+    // A(25) + B(20) = 45 -> max(45, 50) = 50. The exchange tx is not the
+    // first funder, so check C does not add anything.
+    const r = await scan(
+      profile({
+        [W1]: {
+          chain: "ethereum",
+          transactions: [
+            tx(EXT, W1, eth(1), T - 200, 1),
+            tx(EXCHANGE_ADDR, W1, eth(1), T - 100, 2),
+          ],
+        },
+        [W2]: { chain: "ethereum", ensName: "named.eth" },
+      }),
+    );
+    expect(checks(r)).toEqual(new Set(["A", "B"]));
+    expect(r.score).toBe(50);
+  });
+
+  it("never exceeds the 100 cap (all nine checks = 97.5)", async () => {
+    // Fires every check A-I; per-check-once scoring tops out at
+    // 25+20+15+15+10+5+3+1.5+3 = 97.5.
     const r = await scan(
       profile({
         [W1]: {
@@ -324,8 +354,10 @@ describe("scoring", () => {
           ensName: "a.eth",
           transactions: [
             tx(EXCHANGE_ADDR, W1, eth(1), T - 100, 1),
-            tx(W1, W2, eth(1), T, 2),
-            tx(W1, EXT, eth(0.4), T + 60, 3),
+            tx(W1, W2, eth(1), T + 300, 2),
+            tx(W1, EXT, eth(0.5), T + 400, 3),
+            tx(W1, a(8), eth(1), T + 500, 4),
+            tx(W1, a(7), eth(0.33), T + 600, 5),
           ],
           approvals: [
             { txHash: "0x" + "8".repeat(64), chain: "ethereum", token: a(5), owner: W1, spender: W2 },
@@ -334,25 +366,17 @@ describe("scoring", () => {
         [W2]: {
           chain: "ethereum",
           nonce: 2,
-          ensName: "b.eth",
           transactions: [
-            tx(W1, W2, eth(1), T, 2),
-            tx(EXCHANGE_ADDR, W2, eth(1), T - 50, 4),
-            tx(W2, EXT, eth(0.4), T + 70, 5),
-          ],
-        },
-        [W3]: {
-          chain: "ethereum",
-          nonce: 1,
-          ensName: "c.eth",
-          transactions: [
-            tx(EXCHANGE_ADDR, W3, eth(1), T - 40, 6),
-            tx(W3, EXT, eth(0.4), T + 80, 7),
+            tx(W1, W2, eth(1), T + 300, 2),
+            tx(W2, EXT, eth(0.4), T + 700, 6),
+            tx(W2, a(6), eth(0.4), T + 800, 7),
           ],
         },
       }),
     );
-    expect(r.score).toBe(100);
+    expect(checks(r)).toEqual(new Set(["A", "B", "C", "D", "E", "F", "G", "H", "I"]));
+    expect(r.score).toBe(97.5);
+    expect(r.score).toBeLessThanOrEqual(100);
     expect(r.band).toBe("doxxed");
   });
 
@@ -365,6 +389,21 @@ describe("scoring", () => {
     expect(bandForScore(79)).toBe("identifiable");
     expect(bandForScore(80)).toBe("doxxed");
     expect(bandForScore(100)).toBe("doxxed");
+  });
+});
+
+describe("sample fixtures", () => {
+  it("exposed sample fires all checks, both warnings, identifiable/doxxed", async () => {
+    const p = readJson("../fixtures/sample-wallets/exposed.json");
+    const r = await scan(p);
+    expect(checks(r)).toEqual(
+      new Set(["A", "B", "C", "D", "E", "F", "G", "H", "I"]),
+    );
+    expect(r.warnings.map((w) => w.kind).sort()).toEqual([
+      "address-poisoning",
+      "sanctioned-counterparty",
+    ]);
+    expect(["identifiable", "doxxed"]).toContain(r.band);
   });
 });
 
