@@ -1,22 +1,67 @@
-/** NEAR AI Cloud TEE attestation check, verified on device. */
+/** NEAR AI Cloud TEE attestation checks + private explainer, verified on device. */
 
-export interface AttestationReport {
-  model: string;
-  /** Raw attestation quote returned by NEAR AI Cloud. */
-  quote: string;
-  nonce: string;
-}
-
-export interface AttestationResult {
-  verified: boolean;
-  model: string;
-  reasons: string[];
-}
-
-export function fetchAttestation(_model: string, _nonce: string): Promise<AttestationReport> {
-  throw new Error("not implemented");
-}
-
-export function verifyAttestation(_report: AttestationReport): Promise<AttestationResult> {
-  throw new Error("not implemented");
-}
+export {
+  bytesEqual,
+  concatBytes,
+  fromHex,
+  sha256,
+  sha256Hex,
+  sha384,
+  toHex,
+  utf8,
+} from "./bytes";
+export {
+  checkNearReport,
+  errMessage,
+  replayRtmr3,
+} from "./report";
+export type {
+  AttestationCheck,
+  CheckNearReportOptions,
+  EventLogEntry,
+  NearReport,
+  QuoteMeasurements,
+  QuoteVerifier,
+} from "./report";
+export {
+  ATTESTATION_PATH,
+  createDcapQuoteVerifier,
+  DEFAULT_MODEL,
+  fetchAttestationReport,
+  generateNonce,
+  NEAR_AI_CLOUD_BASE,
+  verifyAttestation,
+} from "./verify";
+export type {
+  AttestationResponse,
+  ReportFetcher,
+  VerificationResult,
+  VerifiedSigner,
+  VerifyAttestationOptions,
+} from "./verify";
+export {
+  buildExplainMessages,
+  explainScanReport,
+  redactScanReport,
+  unredactText,
+} from "./explain";
+export type {
+  ChatMessage,
+  CompletionCaller,
+  CompletionResult,
+  Explanation,
+  ExplanationJson,
+  RedactedFinding,
+  RedactedScanReport,
+  RedactedWarning,
+  RedactionResult,
+} from "./explain";
+export {
+  fetchResponseSignature,
+  verifyResponseSignature,
+} from "./signature";
+export type {
+  SignaturePayload,
+  SignatureVerification,
+  VerifySignatureOptions,
+} from "./signature";
