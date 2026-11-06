@@ -26,7 +26,11 @@ export const CHECKS: Record<
   I: { weight: 3, kind: "approval-link", name: "approval to another of your wallets" },
 } as const;
 
-/** Confidence applied per check. Heuristic checks (G, H) score below 1. */
+/**
+ * Confidence applied per check. G's rule (a shared send-time fingerprint with
+ * >= 2 outgoing txs each) is a definite hit when it fires, so only the
+ * heuristic check H scores below 1.
+ */
 export const CHECK_CONFIDENCE: Record<CheckId, number> = {
   A: 1,
   B: 1,
@@ -34,7 +38,7 @@ export const CHECK_CONFIDENCE: Record<CheckId, number> = {
   D: 1,
   E: 1,
   F: 1,
-  G: 0.75,
+  G: 1,
   H: 0.5,
   I: 1,
 } as const;
@@ -521,6 +525,64 @@ export async function scanWallets(
           [d.addr],
         ),
       );
+    }
+  }
+
+  // ---- inherited identity: A and B propagate across linked wallets ------
+  // An observer who clustered the wallets can attach one wallet's identity to
+  // the rest. Build connected components from the findings that carry
+  // linkedWallets (C, D, E, G, I), then give every member of a component the
+  // A and B findings held by any other member. Inherited findings keep the
+  // same check, weight, confidence and points; the set-level score is
+  // unchanged because each check still counts once via checkDedupedScore.
+  // Non-identity checks (F, G, H, ...) never propagate.
+  {
+    const parent = new Map<string, string>();
+    const find = (a: string): string => {
+      let root = a;
+      while (parent.get(root) !== root) root = parent.get(root)!;
+      let cur = a;
+      while (parent.get(cur) !== cur) {
+        const next = parent.get(cur)!;
+        parent.set(cur, root);
+        cur = next;
+      }
+      return root;
+    };
+    const union = (a: string, b: string) => {
+      const ra = find(a);
+      const rb = find(b);
+      if (ra !== rb) parent.set(ra, rb);
+    };
+    for (const d of data) parent.set(d.addr, d.addr);
+    for (const f of findings) {
+      for (const w of f.linkedWallets ?? []) union(f.wallet, w);
+    }
+    const components = new Map<string, string[]>();
+    for (const d of data) {
+      const root = find(d.addr);
+      components.set(root, [...(components.get(root) ?? []), d.addr]);
+    }
+    for (const members of components.values()) {
+      if (members.length < 2) continue;
+      for (const check of ["A", "B"] as const) {
+        const source = findings.find(
+          (f) => f.check === check && members.includes(f.wallet),
+        );
+        if (!source) continue;
+        for (const member of members) {
+          if (member === source.wallet) continue;
+          if (findings.some((f) => f.check === check && f.wallet === member))
+            continue;
+          findings.push({
+            ...source,
+            wallet: member,
+            detail: `inherited: clustered with ${source.wallet}, which ${source.detail}`,
+            linkedWallets: [source.wallet],
+            evidence: { ...source.evidence },
+          });
+        }
+      }
     }
   }
 

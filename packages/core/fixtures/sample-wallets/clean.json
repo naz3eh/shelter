@@ -4,12 +4,12 @@
   "wallets": [
     {
       "chain": "base",
-      "address": "0x157bfbecd023fd6384dad2bded5dad7e27bf92e4",
+      "address": "0x3c19bf1796b348aeffabde765203b5ac32762968",
       "label": "fresh"
     }
   ],
   "accounts": {
-    "0x157bfbecd023fd6384dad2bded5dad7e27bf92e4": {
+    "0x3c19bf1796b348aeffabde765203b5ac32762968": {
       "chain": "base",
       "balanceWei": "750000000000000000",
       "nonce": 0,
@@ -18,8 +18,8 @@
         {
           "hash": "0x9e93753141b29350b984c354ab8436093c74bebb076872bad623065867fddf13",
           "chain": "base",
-          "from": "0xa01cca6367a84304b6607b76676c66c360b74741",
-          "to": "0x157bfbecd023fd6384dad2bded5dad7e27bf92e4",
+          "from": "0x1eeb8ecc71168b03a531cf82506696fff4a6321b",
+          "to": "0x3c19bf1796b348aeffabde765203b5ac32762968",
           "valueWei": "750000000000000000",
           "timestamp": 1760472000
         }

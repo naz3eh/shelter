@@ -34,7 +34,7 @@ export const OFAC_ADDR = (
 export const hash = (n: number) => `0x${n.toString(16).padStart(64, "0")}`;
 export const eth = (n: number) =>
   (BigInt(Math.round(n * 1000)) * 10n ** 15n).toString();
-export const T = 1760558400; // 2026-10-15T14:00:00Z
+export const T = 1760558400; // 2025-10-15T20:00:00Z
 
 export function tx(
   from: string,
