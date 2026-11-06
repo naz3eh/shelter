@@ -1,12 +1,15 @@
 # Status
 
-**2026-11-04 14:14 UTC**
+**2026-11-06 07:52 UTC**
 
-G7 is built and locally green: the NEAR AI explainer, the on-device TEE
-attestation check (browser + CLI), the Verified panel, and the two CLI
-commands all exist, with 13 offline fixture tests covering the failure
-modes. The only thing that cannot run is the *live* check, which is
-blocked on a real `NEAR_AI_API_KEY` from the human.
+G7 is now proven end-to-end on the live NEAR AI Cloud: the human supplied
+`NEAR_AI_API_KEY` and both live commands passed — `pnpm verify-attestation`
+(16/16 checks, real Intel DCAP quote verified via @phala/dcap-qvl) and
+`pnpm --filter @shelter/cli explain --sample exposed` (attestation
+preflight, redacted completion, 6/6 response-signature checks,
+VERIFIED ANSWER, completion `c556243cbd2447c3aaf0b4db939baf6a`). Branch
+`feat/attest-verified-panel` is pushed; PR opening/do-not-merge is with
+the human (`gh` is not installed here).
 
 ## Goals
 
@@ -18,15 +21,15 @@ blocked on a real `NEAR_AI_API_KEY` from the human.
 | G4 Intents layer | not started | `packages/intents` stub only |
 | G5 Seed vault | not started | `packages/keys` stub only |
 | G6 Burner engine | not started | `packages/burner` stub only |
-| G7 NEAR AI explainer + Verified panel | done modulo live key | this branch; see below |
+| G7 NEAR AI explainer + Verified panel | **done** | live run 2026-11-06T07:07Z: nonce `4941e9e7…0d763f`, model signer `0x3b753b44…0424fa0c`, gateway signer `0xb98a789c…a957e779`, 16/16 attestation + 6/6 signature checks PASS, completion `c556243cbd2447c3aaf0b4db939baf6a`; code on `feat/attest-verified-panel` |
 | G8 Web screens | in progress | Verified panel on `/`; other screens not started |
 | G9 `pnpm demo --dry-run` | not started | `scripts/demo` stub only |
 | G10 README / LICENSE / threat model | in progress | README updated for G7; threat model AI section added; other sections pending |
 | G11 Hosted demo | not started | — |
 
-Timeline: plan said G1–G3, G7, G8-fake-data by Nov 8. G1–G3 done; G7 code
-done, live run blocked on the key; G8 has only the panel so far.
-**On track if the key arrives soon; the G8 screens are the next push.**
+Timeline: plan said G1–G3, G7, G8-fake-data by Nov 8. G1–G3 and G7 done
+(G7 verified live on Nov 6, inside the window); G8 has only the panel.
+**On track — G8 screens are the next push.**
 
 ## Build / typecheck / test
 
@@ -35,57 +38,35 @@ done, live run blocked on the key; G8 has only the panel so far.
 - `pnpm build` — passes (incl. Next production build; `@phala/dcap-qvl`
   bundles into the client with browser shims)
 - `pnpm -r test` — 42 tests pass (core 29, attest 13), no network calls
+- Live: `pnpm verify-attestation` → VERIFIED, 16/16 checks (2026-11-06)
+- Live: `pnpm --filter @shelter/cli explain --sample exposed` → VERIFIED
+  ANSWER, explanation printed (2026-11-06)
 
 ## Open PRs
 
-- `feat/attest-verified-panel` → PR **not opened yet**: `gh` is not
-  installed on this machine. The branch is committed locally; pushing it
-  and opening the PR needs the human (HACKATHON.md: no push without
-  explicit confirmation). Suggested PR body:
-
-  > **G7: NEAR AI explainer + Verified panel.** Every check and where it
-  > runs:
-  >
-  > | Check | Browser (panel) | CLI |
-  > |---|---|---|
-  > | Report fetch via `/api/attestation` proxy (nonce passes through unchanged) | yes | n/a (direct fetch) |
-  > | Intel DCAP quote verify (@phala/dcap-qvl, collateral via Phala PCCS) | yes | yes |
-  > | TDX debug flag off | yes | yes |
-  > | `request_nonce` echoes fresh client nonce | yes | yes |
-  > | `report_data` binds signer identity + nonce | yes | yes |
-  > | RTMR3 replayed from `event_log` | yes | yes |
-  > | `SHA-256(app_compose)` == MRCONFIGID | yes | yes |
-  > | `model_attestations` present, every candidate checked | yes | yes |
-  > | NVIDIA GPU evidence | shown "present, not verified" | shown "present, not verified" |
-  > | Response signature: request/response hash binding, EIP-191 recover, exactly-one-signer match | yes | yes |
-  >
-  > API key stays server/CLI-side; the proxy only adds it. `/api/explain`
-  > is stateless (no body logging, no storage, no analytics) and rejects
-  > unredacted bodies. 13 fixture tests, no network. Do not merge.
+- `feat/attest-verified-panel` — pushed 2026-11-04; open the PR at
+  https://github.com/naz3eh/shelter/pull/new/feat/attest-verified-panel
+  (`gh` not installed). Do not merge. PR body (check table + limits) was
+  provided to the human; the "live run not yet executed" caveat is now
+  obsolete — the live run passed and is logged above.
 
 ## Blockers / what I need from a human
 
-1. **`NEAR_AI_API_KEY`** — generate at https://cloud.near.ai (Q-000: $10
-   free via NEAR Builders). Put it in `.env` (gitignored). Then:
-   `pnpm verify-attestation` and
-   `pnpm --filter @shelter/cli explain --sample exposed` should both pass.
-2. **Push + PR** — `gh` missing; either install it or push
-   `feat/attest-verified-panel` and open the PR yourself with the body
-   above. Do not merge.
-3. **DCAP live check unproven** — `@phala/dcap-qvl` verified offline via
-   an injected seam; the real verifier has never run against a live quote
-   (no key). If it fails on a real quote, that is a code fix on this
-   branch, not a design change.
+1. **Open the PR** for `feat/attest-verified-panel` (link + body above);
+   do not merge.
+2. **`ONECLICK_JWT`** — needed before G4's 1Click client can call the real
+   API. Register at https://partners.near-intents.org.
+3. No other blockers: `NEAR_AI_API_KEY` is now in `.env` and the live
+   path is green.
 
 ## Next 3 tasks
 
-1. Human drops `NEAR_AI_API_KEY` in `.env` → run live
-   `pnpm verify-attestation` + `explain --sample exposed`, fix whatever a
-   real report/quote reveals, update this file.
-2. G8 web screens: setup → scan results → plan → move tracker → burner →
-   re-scan before/after, wired to `packages/core` on sample data.
-3. G4 1Click intents client (quotes `dry: true`, deposit/withdraw/status,
-   `X-API-Key` from `ONECLICK_JWT`) — needs the JWT from the human.
+1. G8 web screens: setup → scan results → plan → move tracker → burner →
+   re-scan before/after, wired to `packages/core` on sample data, with the
+   VerifiedPanel beside each AI answer.
+2. G4 1Click intents client (quotes `dry: true`, deposit/withdraw/status,
+   `X-API-Key` from `ONECLICK_JWT`) once the JWT lands.
+3. G5 seed vault + hardened derivation (`packages/keys`).
 
 ## Interface changes
 
