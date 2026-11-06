@@ -343,9 +343,9 @@ describe("scoring", () => {
     expect(r.score).toBe(50);
   });
 
-  it("never exceeds the 100 cap (all nine checks = 97.5)", async () => {
+  it("never exceeds the 100 cap (all nine checks = 98.5)", async () => {
     // Fires every check A-I; per-check-once scoring tops out at
-    // 25+20+15+15+10+5+3+1.5+3 = 97.5.
+    // 25+20+15+15+10+5+4+1.5+3 = 98.5.
     const r = await scan(
       profile({
         [W1]: {
@@ -375,7 +375,7 @@ describe("scoring", () => {
       }),
     );
     expect(checks(r)).toEqual(new Set(["A", "B", "C", "D", "E", "F", "G", "H", "I"]));
-    expect(r.score).toBe(97.5);
+    expect(r.score).toBe(98.5);
     expect(r.score).toBeLessThanOrEqual(100);
     expect(r.band).toBe("doxxed");
   });
@@ -389,6 +389,63 @@ describe("scoring", () => {
     expect(bandForScore(79)).toBe("identifiable");
     expect(bandForScore(80)).toBe("doxxed");
     expect(bandForScore(100)).toBe("doxxed");
+  });
+});
+
+describe("inherited identity (A and B)", () => {
+  // Wallet 1 carries the identity hits (exchange counterparty + ENS); the
+  // wallets are clustered by a direct transfer (E). The first funder is
+  // unlabelled so check C stays out of the arithmetic.
+  const accounts = {
+    [W1]: {
+      chain: "ethereum",
+      ensName: "victim.eth",
+      transactions: [
+        tx(EXT, W1, eth(1), T - 200, 1),
+        tx(EXCHANGE_ADDR, W1, eth(1), T - 100, 2),
+        tx(W1, W2, eth(0.5), T, 3),
+      ],
+    },
+    [W2]: {
+      chain: "ethereum",
+      // Funded first by an unlabelled address so check C does not fire; the
+      // later W1->W2 transfer only creates the E link.
+      transactions: [
+        tx(EXT, W2, eth(0.2), T - 300, 4),
+        tx(W1, W2, eth(0.5), T, 3),
+      ],
+    },
+  };
+
+  it("a clustered wallet inherits A and B and the floor of 50", async () => {
+    const r = await scan(profile(accounts));
+    const w2 = r.wallets.find((w) => w.wallet.address.toLowerCase() === W2)!;
+
+    const inherited = w2.findings.filter(
+      (f) => (f.check === "A" || f.check === "B") && f.wallet === W2,
+    );
+    expect(new Set(inherited.map((f) => f.check))).toEqual(new Set(["A", "B"]));
+    for (const f of inherited) {
+      expect(f.detail).toContain("inherited");
+      expect(f.detail).toContain(W1);
+      expect(f.linkedWallets).toContain(W1);
+    }
+    expect(w2.score).toBeGreaterThanOrEqual(50);
+    expect(["identifiable", "doxxed"]).toContain(w2.band);
+
+    // Set-level scoring still counts each check once: A(25)+B(20)+E(10) = 55.
+    expect(r.score).toBe(55);
+  });
+
+  it("does not invent A or B for the same wallet scanned alone", async () => {
+    const p = profile(accounts, {
+      wallets: [{ chain: "ethereum", address: W2 }],
+    });
+    const r = await scan(p);
+    expect(checks(r, W2)).not.toContain("A");
+    expect(checks(r, W2)).not.toContain("B");
+    expect(r.score).toBeLessThan(50);
+    expect(r.wallets).toHaveLength(1);
   });
 });
 

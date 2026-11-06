@@ -34,9 +34,9 @@ pnpm verify-attestation
 
 ## Try the scan
 
-The scan runs on your device against recorded fictional wallets; no keys, funds or network access are needed for the samples.
+The scan runs on your device against recorded fictional wallets; no keys, funds or network access are needed for the samples. Sample addresses are deterministic keccak256 hashes (`shelter:sample:<profile>:<name>`) — not the well-known integer test keys 1 and 2 — and their recorded history is fictional.
 
-- run `pnpm --filter @shelter/cli scan --sample exposed` — see score 100/100, band `doxxed`, findings A–I with points, two warnings (OFAC counterparty, address poisoning), `linkedAddressCount: 2`.
+- run `pnpm --filter @shelter/cli scan --sample exposed` — see score 98.5/100, band `doxxed`, findings A–I with points, two warnings (OFAC counterparty, address poisoning), `linkedAddressCount: 2`.
 - run `pnpm --filter @shelter/cli scan --sample medium` — see band `linkable`, findings D, F and H.
 - run `pnpm --filter @shelter/cli scan --sample clean` — see score 0/100, band `clean`.
 - run `pnpm --filter @shelter/cli scan --address 0xYOURADDRESS --chain base` — see the score, band and findings for a real address, read live from Base (Blockscout + your `BASE_RPC_URL` or the default public RPC).
@@ -53,7 +53,7 @@ Explanations run on `z-ai/glm-5.3-flash` inside NEAR AI Cloud TEEs. The client p
 
 ## Libraries
 
-- viem 2.57.x (MIT) — EVM RPC reads (balance, nonce, ENS reverse), test-key address derivation for fixtures, EIP-191 signature recovery for response signatures
+- viem 2.57.x (MIT) — EVM RPC reads (balance, nonce, ENS reverse), keccak-derived fixture addresses, EIP-191 signature recovery for response signatures
 - @phala/dcap-qvl 0.7.0 (Apache-2.0) — pure-JS DCAP quote verification (Intel TDX), runs in browser and Node
 - openai 7.45.1 (Apache-2.0) — OpenAI-compatible client, server-side only, pointed at `https://cloud-api.near.ai/v1`
 - vitest 3.x (MIT) — unit tests in packages/core and packages/attest

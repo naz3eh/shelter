@@ -2,11 +2,14 @@
  * Generates the fictional sample-wallet fixtures in
  * packages/core/fixtures/sample-wallets/.
  *
- * Wallet addresses come from fixed throwaway test keys via viem's
- * privateKeyToAddress; they are not real wallets and hold no funds.
- * Counterparties that must be labelled (one exchange address, one OFAC
- * address) are taken from the bundled label sets in packages/core/data/ so
- * the fixtures stay consistent with the shipped data.
+ * Wallet and unlabelled-counterparty addresses are deterministic keccak256
+ * hashes ("shelter:sample:<profile>:<name>") used as fixture keys via viem's
+ * privateKeyToAddress — they are NOT the well-known anvil/hardhat integer
+ * accounts (0x...01, 0x...02) that carry real mainnet history, and the
+ * recorded history in the fixtures is fictional. Counterparties that must be
+ * labelled (one exchange address, one OFAC address) are taken from the
+ * bundled label sets in packages/core/data/ so the fixtures stay consistent
+ * with the shipped data.
  *
  * Run: pnpm --filter @shelter/cli exec tsx ../../scripts/gen-sample-wallets.ts
  */
@@ -22,13 +25,12 @@ const readJson = (rel: string) =>
 const exchangeLabels = readJson("../packages/core/data/exchange-labels.json");
 const ofac = readJson("../packages/core/data/ofac-sanctioned.json");
 
-const key = (n: number) =>
-  `0x${n.toString(16).padStart(64, "0")}` as `0x${string}`;
-const addr = (n: number) => privateKeyToAddress(key(n)).toLowerCase();
+const addr = (id: string) =>
+  privateKeyToAddress(keccak256(toBytes(`shelter:sample:${id}`))).toLowerCase();
 const tx = (profile: string, n: number) =>
   keccak256(toBytes(`${profile}-tx-${n}`));
 
-/** 2026-10-15T14:00:00Z — most sends sit in this UTC hour for check G. */
+/** 2025-10-15T20:00:00Z — most sends sit in this UTC hour for check G. */
 const T = 1760558400;
 const eth = (n: number) => (n * 10 ** 18).toString();
 
@@ -71,11 +73,11 @@ const mkTx = (
 // ---------------- exposed ----------------
 // Fires every check A-I and both warnings.
 {
-  const W1 = addr(1);
-  const W2 = addr(2);
-  const SHARED_DEST = addr(101);
-  const OTHER_DEST = addr(102);
-  const RANDOM_DUSTER = addr(103);
+  const W1 = addr("exposed:w1");
+  const W2 = addr("exposed:w2");
+  const SHARED_DEST = addr("exposed:shared-dest");
+  const OTHER_DEST = addr("exposed:other-dest");
+  const RANDOM_DUSTER = addr("exposed:duster");
   const LOOKALIKE_W2 = `${W2.slice(0, 6)}${"1".repeat(32)}${W2.slice(-4)}`;
 
   const w1txs: Tx[] = [
@@ -147,10 +149,10 @@ const mkTx = (
 // ---------------- medium ----------------
 // Shared destination + exposed key + round amounts -> linkable band.
 {
-  const M1 = addr(11);
-  const M2 = addr(12);
-  const SHARED = addr(111);
-  const FUNDER = addr(112);
+  const M1 = addr("medium:m1");
+  const M2 = addr("medium:m2");
+  const SHARED = addr("medium:shared");
+  const FUNDER = addr("medium:funder");
 
   const profile = {
     name: "medium",
@@ -170,8 +172,8 @@ const mkTx = (
           mkTx("medium", 1, "ethereum", FUNDER, M1, eth(2), T - 86400 * 10),
           mkTx("medium", 2, "ethereum", M1, SHARED, eth(0.5), T + 10 * 60),
           // two identical round sends -> check H
-          mkTx("medium", 3, "ethereum", M1, addr(113), eth(0.5), T + 70 * 60),
-          mkTx("medium", 4, "ethereum", M1, addr(114), eth(0.5), T + 80 * 60),
+          mkTx("medium", 3, "ethereum", M1, addr("medium:dest1"), eth(0.5), T + 70 * 60),
+          mkTx("medium", 4, "ethereum", M1, addr("medium:dest2"), eth(0.5), T + 80 * 60),
         ],
         tokenTransfers: [],
         approvals: [],
@@ -196,8 +198,8 @@ const mkTx = (
 // ---------------- clean ----------------
 // One fresh wallet, funded by an unlabelled address, never signed.
 {
-  const C1 = addr(21);
-  const FUNDER = addr(121);
+  const C1 = addr("clean:c1");
+  const FUNDER = addr("clean:funder");
   const profile = {
     name: "clean",
     description: "Fictional fresh wallet with no exposure findings.",
