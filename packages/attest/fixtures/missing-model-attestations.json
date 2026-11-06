@@ -1,0 +1,36 @@
+{
+  "description": "no model_attestations field in the response",
+  "model": "z-ai/glm-5.3-flash",
+  "clientNonce": "abababababababababababababababababababababababababababababababab",
+  "response": {
+    "gateway_attestation": {
+      "intel_quote": "0400aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "event_log": "[{\"imr\":0,\"event_type\":1,\"event\":\"td-shim-init\",\"event_payload\":\"ab\",\"digest\":\"\"},{\"imr\":3,\"event_type\":134217729,\"event\":\"compose-hash\",\"event_payload\":\"1111111111111111111111111111111111111111111111111111111111111111\",\"digest\":\"fd1232a6a2ed33051c76fa5c6b11a12c8bb3a6b7cececd8d8464c28b4bfa37296c68d731960f92c30966c87b7f992b4c\"},{\"imr\":3,\"event_type\":134217730,\"event\":\"app-id\",\"event_payload\":\"2222222222222222222222222222222222222222\",\"digest\":\"c25cfb79d1ff74dba73a8c97b3e9bd40d4f01782c46a17e2d2f0c0ac70e6aa49e8ec0da66033e16b33f1b14e4665881c\"},{\"imr\":3,\"event_type\":134217731,\"event\":\"instance-id\",\"event_payload\":\"33333333333333333333333333333333\",\"digest\":\"a86250d2918095a8e64d8c9fcfce1a1722f06757664d92d5d5a64cc75c75acc10b5c1a7d9f56087a920f8aa62ef35d28\"},{\"imr\":2,\"event_type\":9,\"event\":\"other-mr\",\"event_payload\":\"ff\",\"digest\":\"\"}]",
+      "request_nonce": "abababababababababababababababababababababababababababababababab",
+      "signing_address": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      "signing_algo": "ecdsa",
+      "nvidia_payload": "{\"nonce\":\"abababababababababababababababababababababababababababababababab\",\"arch\":\"H100\",\"evidence\":\"nras-jwt-payload\"}",
+      "info": {
+        "tcb_info": "{\"app_compose\":\"{\\\"manifest_version\\\":2,\\\"name\\\":\\\"shelter-explainer-tee\\\",\\\"runner\\\":\\\"docker-compose\\\",\\\"docker-compose\\\":\\\"version: \\\\\\\"3.8\\\\\\\"\\\\nservices:\\\\n  app:\\\\n    image: nearai/vllm-tee@sha256:abc\\\\n\\\",\\\"features\\\":[\\\"tproxy\\\"],\\\"kms_enabled\\\":true}\",\"mrtd\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"tcb_status\":\"UpToDate\",\"os_image_hash\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\"}"
+      }
+    }
+  },
+  "quoteExpectations": {
+    "0400aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": {
+      "status": "UpToDate",
+      "advisoryIds": [],
+      "tdAttributes": "0000000000000000",
+      "reportData": "70997970c51812dc3a010c7d01b50e0d17dc79c8000000000000000000000000abababababababababababababababababababababababababababababababab",
+      "mrConfigId": "016dfb038a9aa053f78c984da9395e13cd8c2099c63af4450ddf2200398870ea64000000000000000000000000000000",
+      "rtMr3": "be8faa6df23ee5d57942bdbdcc842969ce8863b4913dcbbb19da3d39f52e3ad5307c38b61f37dc154684598c40b5ba3a"
+    },
+    "0400bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb": {
+      "status": "UpToDate",
+      "advisoryIds": [],
+      "tdAttributes": "0000000000000000",
+      "reportData": "f39fd6e51aad88f6f4ce6ab8827279cfffb92266000000000000000000000000abababababababababababababababababababababababababababababababab",
+      "mrConfigId": "016dfb038a9aa053f78c984da9395e13cd8c2099c63af4450ddf2200398870ea64000000000000000000000000000000",
+      "rtMr3": "be8faa6df23ee5d57942bdbdcc842969ce8863b4913dcbbb19da3d39f52e3ad5307c38b61f37dc154684598c40b5ba3a"
+    }
+  }
+}

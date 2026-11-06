@@ -1,4 +1,5 @@
 import type { ExposureReport } from "@shelter/core";
+import { VerifiedPanel } from "@/components/verified-panel";
 
 const placeholder: Pick<ExposureReport, "score"> = { score: 0 };
 
@@ -13,6 +14,7 @@ export default function Home() {
         <div className="text-sm text-neutral-500">Exposure score</div>
         <div className="text-5xl font-bold">{placeholder.score}</div>
       </div>
+      <VerifiedPanel />
     </main>
   );
 }

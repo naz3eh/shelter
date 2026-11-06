@@ -11,7 +11,8 @@
     "demo": "tsx src/demo.ts",
     "verify-attestation": "tsx src/verify-attestation.ts",
     "typecheck": "tsc -p tsconfig.json",
-    "scan": "tsx src/index.ts scan"
+    "scan": "tsx src/index.ts scan",
+    "explain": "tsx src/index.ts explain"
   },
   "dependencies": {
     "@shelter/attest": "workspace:*",
