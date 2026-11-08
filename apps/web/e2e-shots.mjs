@@ -9,7 +9,9 @@ import { chromium } from "@playwright/test";
 import { mkdirSync } from "node:fs";
 
 const BASE = "http://localhost:3100";
-const OUT = new URL("./test-results/screenshots/", import.meta.url).pathname;
+const OUT =
+  process.env.SHOTS_OUT ??
+  new URL("./test-results/screenshots/", import.meta.url).pathname;
 mkdirSync(OUT, { recursive: true });
 
 const VIEWPORTS = [
