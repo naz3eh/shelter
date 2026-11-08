@@ -1,7 +1,7 @@
 import { createPublicClient, http, type PublicClient } from "viem";
 import { base, mainnet } from "viem/chains";
-import type { ChainId } from "../index.js";
-import { BlockscoutClient } from "./blockscout.js";
+import type { ChainId } from "../index";
+import { BlockscoutClient } from "./blockscout";
 import type {
   ApprovalRecord,
   ChainReader,
@@ -9,7 +9,7 @@ import type {
   NearAccountInfo,
   TokenTransferRecord,
   TxRecord,
-} from "./types.js";
+} from "./types";
 
 const EVM_CHAINS = new Set(["ethereum", "base"]);
 
@@ -147,9 +147,9 @@ export function createChainReader(config: ChainReaderConfig = {}): ChainReader {
   };
 }
 
-export { BlockscoutClient } from "./blockscout.js";
-export { FixtureReader } from "./fixture.js";
-export type { FixtureAccount, FixtureProfile } from "./fixture.js";
+export { BlockscoutClient } from "./blockscout";
+export { FixtureReader } from "./fixture";
+export type { FixtureAccount, FixtureProfile } from "./fixture";
 export type {
   ApprovalRecord,
   ChainReader,
@@ -157,4 +157,4 @@ export type {
   NearAccountInfo,
   TokenTransferRecord,
   TxRecord,
-} from "./types.js";
+} from "./types";

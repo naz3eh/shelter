@@ -1,6 +1,6 @@
 import exchangeLabelsJson from "../../data/exchange-labels.json";
 import ofacJson from "../../data/ofac-sanctioned.json";
-import type { AddressBook, ChainId } from "../index.js";
+import type { AddressBook, ChainId } from "../index";
 
 /**
  * Static label sets bundled in data/. All lookups are local Set/Map reads —

@@ -41,6 +41,24 @@ The scan runs on your device against recorded fictional wallets; no keys, funds 
 - run `pnpm --filter @shelter/cli scan --sample clean` — see score 0/100, band `clean`.
 - run `pnpm --filter @shelter/cli scan --address 0xYOURADDRESS --chain base` — see the score, band and findings for a real address, read live from Base (Blockscout + your `BASE_RPC_URL` or the default public RPC).
 
+## Browser sample flow (G8 demo)
+
+`pnpm dev` then open http://localhost:3000 — the app walks six routes over three bundled fictional profiles (exposed / medium / clean): setup → real scan report → editable plan preview → simulated private-move tracker → simulated one-time burner → before/after re-scan. Scans and re-scans run the real `@shelter/core` engine in the browser; move and burner are deterministic local simulations — **no wallet, keys, funds or network calls**, and the UI says so on every step. See `docs/FRONTEND_HANDOFF.md` for the adapter contract and what the backend still needs to provide.
+
+- the sample flow needs no `.env`, credentials or third-party access — `NEXT_PUBLIC_*` secrets are never used and `NEAR_AI_API_KEY` stays server-side
+- "Explain with NEAR AI" is an explicit per-scan action; without the key the panel shows an unavailable state and scanning is unaffected
+- address entry on `/` is intentionally disabled for custom input in this milestone (empty fixture history would fake a clean score)
+
+### Tests
+
+```sh
+pnpm --filter web test          # Vitest: money, plan, sims, after-fixture, explain client (44 tests)
+pnpm --filter web test:e2e      # Playwright: 34 tests, desktop 1440x900 + mobile 390x844, axe a11y
+pnpm exec playwright install chromium   # once, if browsers are missing
+```
+
+E2E starts `next dev` on port 3100 automatically and aborts every non-localhost request, so the demo cannot regress into a network-dependent flow. It deliberately runs without `.env`.
+
 ## Check the AI is private
 
 Explanations run on `z-ai/glm-5.3-flash` inside NEAR AI Cloud TEEs. The client proves the serving hardware, the enclave image, and the response signature before it shows the answer — the API key never reaches the browser.
@@ -63,6 +81,9 @@ Explanations run on `z-ai/glm-5.3-flash` inside NEAR AI Cloud TEEs. The client p
 - tailwindcss 4 / @tailwindcss/postcss 4 (MIT)
 - beUI components (MIT, vendored in `apps/web/components/`) — animated-badge, stateful button, card, collapsible for the Verified panel
 - motion 14.x (MIT), clsx 2.x (MIT), tailwind-merge 3.x (MIT), lucide-react 1.x (ISC) — beUI/shadcn component dependencies
+- @xyflow/react 12.x (MIT) — wallet link graph on `/scan` and `/rescan`
+- vitest 3.x (MIT) — also runs `apps/web` UI-state/adapter unit tests
+- @playwright/test 1.64 (Apache-2.0) + @axe-core/playwright 4.14 (MPL-2.0) — browser flow and accessibility tests, dev-only
 
 ## Datasets
 

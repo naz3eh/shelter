@@ -3,7 +3,7 @@ import type {
   ChainId,
   TokenTransferRecord,
   TxRecord,
-} from "./types.js";
+} from "./types";
 
 /** Minimal Blockscout REST API v2 client (https://eth.blockscout.com/api/v2). */
 

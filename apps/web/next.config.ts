@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   transpilePackages: ["@shelter/core", "@shelter/attest"],
+  // The dev-tools floating button overlaps controls on small viewports.
+  devIndicators: false,
   // @phala/dcap-qvl is isomorphic; its node-only requires need browser stubs.
   turbopack: {
     resolveAlias: {

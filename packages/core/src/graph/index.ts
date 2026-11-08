@@ -1,9 +1,9 @@
-import type { ChainId } from "../index.js";
+import type { ChainId } from "../index";
 import type {
   ApprovalRecord,
   TokenTransferRecord,
   TxRecord,
-} from "../reader/types.js";
+} from "../reader/types";
 
 /** Plain-JSON link graph. No rendering library lives in core. */
 

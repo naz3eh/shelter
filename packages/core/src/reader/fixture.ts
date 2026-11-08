@@ -1,11 +1,11 @@
-import type { ChainId } from "../index.js";
+import type { ChainId } from "../index";
 import type {
   ApprovalRecord,
   ChainReader,
   NearAccountInfo,
   TokenTransferRecord,
   TxRecord,
-} from "./types.js";
+} from "./types";
 
 /** Recorded data for one address inside a fixture profile. */
 export interface FixtureAccount {

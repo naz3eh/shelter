@@ -1,6 +1,6 @@
 /** Exposure engine, planner, and address book. */
 
-import type { ExposureReport } from "./exposure/engine.js";
+import type { ExposureReport } from "./exposure/engine";
 
 export type ChainId = "base" | "ethereum" | "near" | (string & {});
 
@@ -44,7 +44,7 @@ export {
   CHECK_CONFIDENCE,
   CHECKS,
   scanWallets,
-} from "./exposure/engine.js";
+} from "./exposure/engine";
 export type {
   CheckId,
   ExposureBand,
@@ -54,21 +54,21 @@ export type {
   ScanOptions,
   ScanReport,
   ScanWarning,
-} from "./exposure/engine.js";
-export { buildLinkGraph } from "./graph/index.js";
+} from "./exposure/engine";
+export { buildLinkGraph } from "./graph/index";
 export type {
   GraphEdge,
   GraphNode,
   GraphWalletData,
   LinkGraph,
-} from "./graph/index.js";
-export { createLabelStore } from "./labels/index.js";
-export type { LabelStore } from "./labels/index.js";
+} from "./graph/index";
+export { createLabelStore } from "./labels/index";
+export type { LabelStore } from "./labels/index";
 export {
   BlockscoutClient,
   createChainReader,
   FixtureReader,
-} from "./reader/index.js";
+} from "./reader/index";
 export type {
   ApprovalRecord,
   ChainReader,
@@ -78,4 +78,4 @@ export type {
   NearAccountInfo,
   TokenTransferRecord,
   TxRecord,
-} from "./reader/index.js";
+} from "./reader/index";

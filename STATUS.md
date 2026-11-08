@@ -1,107 +1,100 @@
 # Status
 
-**2026-11-06 13:04 UTC**
+**2026-11-08 17:25 UTC**
 
-Scoring fixes, sample-wallet regeneration and CI are committed on
-`fix/scan-ci-samples` (b51c213): check G now scores at confidence 1
-(all-nine-checks report = 98.5), wallets clustered by link findings
-inherit each other's A/B identity findings with the floor of 50, sample
-addresses are keccak-derived fixture keys instead of the well-known
-integer keys 1/2, and a GitHub Actions workflow runs
-install/typecheck/build/test. The branch could not be pushed: the stored
-PAT lacks `workflow` scope — the push and the PR are with the human.
+G8 sample-data browser flow shipped on `feat/web-flow`: six connected
+routes (setup → scan → plan → simulated move → simulated burner →
+before/after re-scan) over the three bundled fictional profiles. Scans and
+re-scans run the real `@shelter/core` engine in the browser; move and
+burner are deterministic local simulations with scenario/retry/cancel
+semantics — no wallet, keys, funds, signing or network calls anywhere in
+the demo. G7 stays fail-closed: an answer renders only after attestation
+and response-signature binding both pass. Correction to the previous
+entry: PR #3 (`fix/scan-ci-samples`) **was merged** — the push-blocked
+text below was stale; git log shows merge commit `67b6867`.
 
 ## Goals
 
 | Goal | Status | Proof |
 | --- | --- | --- |
 | G1 Scan (chain reader) | done | `packages/core` (PR #1, merged `635d046`) |
-| G2 Exposure score A–I | done | `packages/core` engine + 31 vitest tests; this session: G confidence 1, inherited A/B on clustered wallets |
-| G3 Link graph + samples | done | `packages/core/fixtures/sample-wallets/{clean,medium,exposed}.json` regenerated from `shelter:sample:*` keccak keys |
-| G4 Intents layer | not started | `packages/intents` stub only |
-| G5 Seed vault | not started | `packages/keys` stub only |
-| G6 Burner engine | not started | `packages/burner` stub only |
-| G7 NEAR AI explainer + Verified panel | **done** | live run 2026-11-06T07:07Z by the human: `pnpm --filter @shelter/cli explain --sample exposed` — real Intel TDX DCAP quotes verified, TCB UpToDate, nonce / RTMR3 / app_compose / response-signature checks all passed; code merged in PR #2 (`f8c1959`) |
-| G8 Web screens | in progress | Verified panel on `/`; other screens not started |
-| G9 `pnpm demo --dry-run` | not started | `scripts/demo` stub only |
-| G10 README / LICENSE / threat model | in progress | README corrected (98.5, hashed fixture keys); threat model AI section added; other sections pending |
+| G2 Exposure score A–I | done | `packages/core` engine + 31 vitest tests; G confidence 1, inherited A/B (PR #3, merged `67b6867`) |
+| G3 Link graph + samples | done | `packages/core/fixtures/sample-wallets/{clean,medium,exposed}.json` regenerated keccak-derived keys |
+| G4 Intents layer | not started | `packages/intents` stub only — Viraz's lane |
+| G5 Seed vault | not started | `packages/keys` stub only — Viraz's lane |
+| G6 Burner engine | not started | `packages/burner` stub only — Viraz's lane |
+| G7 NEAR AI explainer + Verified panel | done | live run 2026-11-06 verified Intel TDX DCAP quotes, nonce/RTMR3/app_compose/signature checks; merged PR #2 (`f8c1959`). Reused fail-closed on `/scan` via `lib/explain-client.ts` |
+| G8 Web screens | **sample flow done** | `feat/web-flow`: all six routes functional on fictional data; real scanner for every score; 44 unit + 34 Playwright/axe tests green; see `docs/FRONTEND_HANDOFF.md` |
+| G9 `pnpm demo --dry-run` | not started | `scripts/demo` stub only — Viraz's lane |
+| G10 README / LICENSE / threat model | in progress | README now documents the sample flow, test commands and new deps; other sections pending |
 | G11 Hosted demo | not started | — |
 
-Timeline: plan said G1–G3, G7, G8-fake-data by Nov 8. G1–G3 and G7 are
-done (G7 verified live Nov 6, inside the window); G8 has only the panel.
-**On track — G8 screens are the next push.**
+Timeline: G1–G3/G7 + G8 sample flow targeted Nov 8 — **met Nov 8** (this
+branch). G4–G6 + approved mainnet run Nov 11, G9–G11 Nov 13, deadline
+Nov 14 2026 23:59 UTC (Nov 15 05:29 IST). G4–G6/G9 are unstarted in
+Viraz's lane — not labelled on track.
 
-## Build / typecheck / test
+## Build / typecheck / test (this branch, 2026-11-08)
 
-- `pnpm install` — clean
+- `pnpm install --frozen-lockfile` — clean, lockfile up to date
 - `pnpm -r typecheck` — 7 projects pass
-- `pnpm build` — passes (Next production build; also verified with no
-  `.env` present, so CI needs no secrets)
-- `pnpm -r test` — 44 tests pass (core 31, attest 13), no network calls
-- `pnpm --filter @shelter/cli scan --sample exposed` — score **98.5/100**,
-  band `doxxed`, findings A–I, both warnings, `linkedAddressCount: 2`
-  (wallet 2 now shows inherited A and B)
-- `scan --sample medium` — 21.5, `linkable`, findings D, F, H
-- `scan --sample clean` — 0, `clean`
+- `pnpm build` — passes; Next production build emits all 8 routes
+  (`/`, `/scan`, `/plan`, `/move`, `/burner`, `/rescan`, 2 API routes)
+- `pnpm -r test` — **88 tests pass**: core 31, attest 13, web 44
+  (money, plan validation/approval, real sample scans, move + burner
+  sims, after-fixture, explain client)
+- `pnpm --filter web test:e2e` — **34 Playwright tests pass** (17 specs ×
+  desktop 1440×900 + mobile 390×844): full six-route flow, medium/clean
+  profiles, invalid input, direct-route recovery, profile-change
+  invalidation, plan approval revocation, invalid totals, partial
+  funding + refund, cancel/retry, second burner action blocked,
+  export provenance, explain unavailable/fail-closed, keyboard,
+  reduced motion, axe (no serious/critical violations). Non-localhost
+  requests are aborted — fully offline.
+- Browser walkthrough: 18 screenshots (9 states × desktop/mobile) under
+  `apps/web/test-results/screenshots/` — local artifact, not committed.
 
 ## Open PRs
 
-- `fix/scan-ci-samples` — committed locally (b51c213), **push blocked**:
-  the stored GitHub PAT cannot create `.github/workflows/ci.yml` without
-  `workflow` scope. Human action needed:
-  `git push -u origin fix/scan-ci-samples` with a token that has
-  `workflow` scope (or SSH), then open the PR — do not merge.
-  Suggested PR body:
-
-  > Four narrow fixes from the scoring/samples/CI session:
-  >
-  > 1. **G confidence** — check G now scores `weight x 1` when its rule
-  >    fires (shared top UTC send hour, ≥2 outgoing txs each). A report
-  >    firing all nine checks scores 98.5, not 97.5. H stays at 0.5.
-  > 2. **Inherited identity** — connected components built from findings
-  >    with `linkedWallets` (C, D, E, G, I); every member of a cluster
-  >    inherits the A/B findings held by any other member (same check,
-  >    weight, confidence, points; detail marks it inherited). Per-wallet
-  >    floor of 50 now reaches linked wallets; the set score is unchanged
-  >    (each check still counts once). New tests cover the clustered case
-  >    and the alone-wallet negative case.
-  > 3. **Sample wallets** — all fixture addresses (scanned + unlabelled
-  >    counterparties) derive from `keccak256("shelter:sample:<profile>:<name>")`
-  >    instead of integer keys 1–20 that resolve to real mainnet accounts
-  >    with history. Regenerated JSON keeps the same behaviour: exposed
-  >    fires A–I + both warnings (doxxed, 98.5), medium is linkable
-  >    (D, F, H), clean scores 0.
-  > 4. **CI** — `.github/workflows/ci.yml`: ubuntu-latest, Node 20,
-  >    pnpm 10, `pnpm install --frozen-lockfile`, `pnpm -r typecheck`,
-  >    `pnpm build`, `pnpm -r test`. No secrets; tests are fully offline.
-  >
-  > Verified locally: install / typecheck / build / test all green;
-  > `scan --sample exposed` prints 98.5 doxxed.
+- `feat/web-flow` — G8 sample flow (this session). PR to be opened for
+  Nazeeh's review; **do not merge**.
 
 ## Blockers / what I need from a human
 
-1. **Push `fix/scan-ci-samples` and open the PR** — the stored PAT lacks
-   `workflow` scope, which GitHub requires to push files under
-   `.github/workflows/`. Either grant the token that scope, push from a
-   credential that has it, or use SSH.
-2. **`ONECLICK_JWT`** — still needed before G4's 1Click client can call
-   the real API. Register at https://partners.near-intents.org.
-3. No other blockers: `NEAR_AI_API_KEY` is in `.env` and the live path
-   is green.
+1. Review + merge decision on `feat/web-flow` (no auto-merge).
+2. `ONECLICK_JWT` — still needed before G4's 1Click client can call the
+   real API. Register at https://partners.near-intents.org.
+3. `docs/BACKEND_HANDOFF.md` does not exist — Viraz's backend contract is
+   undocumented; `docs/FRONTEND_HANDOFF.md` lists the methods the UI
+   expects (plan, intents progress stream, burner lifecycle, post-move
+   records) as open integration questions.
 
 ## Next 3 tasks
 
-1. G8 web screens: setup → scan results → plan → move tracker → burner →
-   re-scan before/after, wired to `packages/core` on sample data, with
-   the VerifiedPanel beside each AI answer.
-2. G4 1Click intents client (quotes `dry: true`, deposit/withdraw/status,
-   `X-API-Key` from `ONECLICK_JWT`) once the JWT lands.
-3. G5 seed vault + hardened derivation (`packages/keys`).
+1. G4 intents client behind the UI adapter boundary (`PlanDraft` →
+   planner, `MoveSimSnapshot`-shaped progress) once `ONECLICK_JWT` lands.
+2. G5 seed vault + hardened derivation (`packages/keys`) — burner page is
+   already labelled keyless.
+3. G9 recorded-mainnet replay (`scripts/demo`) feeding `/rescan`'s
+   after-fixture path with real recorded data.
 
 ## Interface changes
 
-None in `packages/intents` (untouched). Behaviour changes inside
-`packages/core` only: `CHECK_CONFIDENCE.G` is now `1`, and
-`ScanReport.findings` / `ExposureReport.findings` can contain A/B
-findings marked `inherited:` for wallets clustered to an identified
-wallet. No exported signatures changed.
+- `packages/core`: **import specifiers only** — NodeNext-style `.js`
+  suffixes changed to extensionless relative paths (the package ships raw
+  `src/*.ts` with `moduleResolution: "Bundler"` + `noEmit`; Turbopack
+  could not resolve `.js`→`.ts`). No exported signatures or logic changed;
+  all 31 core tests + evals unchanged.
+- `apps/web/components/motion/button/base.tsx`: exports
+  `BUTTON_VARIANT_CLASS`/`BUTTON_SIZE_CLASS`; `tabIndex={0}` added to
+  Button/ButtonLink to fix an SSR/hydration mismatch (motion injects it
+  client-side only).
+- New `apps/web/components/link-button.tsx`: `next/link`-based button
+  styling. Internal flow navigation must use it — plain `<a href>` reloads
+  the document and wipes the in-memory flow store.
+- New web deps: `@xyflow/react` 12.12.0 (MIT), `@playwright/test` 1.64.0
+  (Apache-2.0), `@axe-core/playwright` 4.14.0 (MPL-2.0), `vitest` 3.2.7
+  (MIT) — lockfile committed.
+- New routes: `/scan`, `/plan`, `/move`, `/burner`, `/rescan`.
+- No changes to `packages/intents`, `packages/keys`, `packages/burner`,
+  `scripts/demo`, or eval fixtures.

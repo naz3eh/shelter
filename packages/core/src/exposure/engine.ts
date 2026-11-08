@@ -1,12 +1,12 @@
-import type { WalletRef } from "../index.js";
-import { buildLinkGraph, type LinkGraph } from "../graph/index.js";
-import { createLabelStore, type LabelStore } from "../labels/index.js";
+import type { WalletRef } from "../index";
+import { buildLinkGraph, type LinkGraph } from "../graph/index";
+import { createLabelStore, type LabelStore } from "../labels/index";
 import type {
   ApprovalRecord,
   ChainReader,
   TokenTransferRecord,
   TxRecord,
-} from "../reader/types.js";
+} from "../reader/types";
 
 export type CheckId = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I";
 

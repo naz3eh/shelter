@@ -45,7 +45,7 @@ export interface ButtonLinkProps extends Omit<
 
 type Ripple = { id: number; x: number; y: number; size: number };
 
-const VARIANT_CLASS: Record<ButtonVariant, string> = {
+export const BUTTON_VARIANT_CLASS: Record<ButtonVariant, string> = {
   primary: "bg-primary text-primary-foreground hover:bg-primary/90",
   secondary: "border border-border bg-card text-foreground hover:border-border",
   ghost: "text-muted-foreground hover:text-foreground hover:bg-muted/60",
@@ -53,12 +53,15 @@ const VARIANT_CLASS: Record<ButtonVariant, string> = {
     "border border-border bg-transparent text-foreground hover:bg-muted/60",
 };
 
-const SIZE_CLASS: Record<ButtonSize, string> = {
+export const BUTTON_SIZE_CLASS: Record<ButtonSize, string> = {
   sm: "h-8 px-3 text-xs gap-1.5 rounded-full",
   md: "h-10 px-5 text-sm gap-2 rounded-full",
   lg: "h-12 px-6 text-base gap-2 rounded-full",
   icon: "h-8 w-8 rounded-lg",
 };
+
+const VARIANT_CLASS = BUTTON_VARIANT_CLASS;
+const SIZE_CLASS = BUTTON_SIZE_CLASS;
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   function Button(
@@ -104,6 +107,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <motion.button
         ref={ref}
         type="button"
+        // Motion injects tabindex="0" for press gestures on the client only;
+        // setting it here keeps SSR and hydration output identical.
+        tabIndex={0}
         whileTap={reduce ? undefined : { scale: pressScale }}
         whileHover={reduce || !canHover ? undefined : { scale: 1.02 }}
         transition={SPRING_PRESS}
@@ -170,6 +176,9 @@ export const ButtonLink = forwardRef<HTMLAnchorElement, ButtonLinkProps>(
     return (
       <motion.a
         ref={ref}
+        // Same SSR/hydration guard as Button: motion injects tabindex on the
+        // client for press gestures.
+        tabIndex={0}
         whileTap={reduce ? undefined : { scale: pressScale }}
         whileHover={reduce || !canHover ? undefined : { scale: 1.02 }}
         transition={SPRING_PRESS}

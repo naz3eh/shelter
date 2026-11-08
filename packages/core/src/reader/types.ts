@@ -1,4 +1,4 @@
-import type { ChainId } from "../index.js";
+import type { ChainId } from "../index";
 
 export type { ChainId };
 
