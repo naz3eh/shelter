@@ -56,8 +56,11 @@ Viraz's lane — not labelled on track.
 
 ## Open PRs
 
-- `feat/web-flow` — G8 sample flow (this session). PR to be opened for
-  Nazeeh's review; **do not merge**.
+- `feat/web-flow` — G8 sample flow, pushed at `6f73a59`
+  (https://github.com/naz3eh/shelter/tree/feat/web-flow). PR not yet
+  opened: no `gh` CLI or approved API credential in this environment —
+  one click at https://github.com/naz3eh/shelter/pull/new/feat/web-flow
+  opens it. **Do not merge** until Nazeeh reviews.
 
 ## Blockers / what I need from a human
 
