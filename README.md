@@ -19,57 +19,96 @@ docs              threat model and design notes
 
 ## Run
 
-Requires Node 20+ and pnpm 10.
+Requires Node 24+ and pnpm 10 (the CLI address book uses the built-in `node:sqlite`).
 
 ```sh
 pnpm install
-cp .env.example .env      # optionally set ETH_RPC_URL / BASE_RPC_URL; fill ONECLICK_JWT and NEAR_AI_API_KEY when needed
+cp .env.example .env      # optionally set ETH_RPC_URL / BASE_RPC_URL; NEAR_AI_API_KEY when needed; ONECLICK_JWT is optional
 pnpm dev                  # web app on http://localhost:3000
 pnpm typecheck
 pnpm build
-pnpm --filter @shelter/core test
+pnpm -r test              # every package, offline, no secrets
 pnpm demo -- --dry-run
 pnpm verify-attestation
 ```
 
 ## Try the scan
 
-The scan runs on your device against recorded fictional wallets; no keys, funds or network access are needed for the samples. Sample addresses are deterministic keccak256 hashes (`shelter:sample:<profile>:<name>`) — not the well-known integer test keys 1 and 2 — and their recorded history is fictional.
+The scan runs on your device against recorded fictional wallets; no keys, funds or network access are needed for the samples. Sample addresses are deterministic keccak256 hashes (`shelter:sample:<profile>:<name>`) - not the well-known integer test keys 1 and 2 - and their recorded history is fictional.
 
-- run `pnpm --filter @shelter/cli scan --sample exposed` — see score 98.5/100, band `doxxed`, findings A–I with points, two warnings (OFAC counterparty, address poisoning), `linkedAddressCount: 2`.
-- run `pnpm --filter @shelter/cli scan --sample medium` — see band `linkable`, findings D, F and H.
-- run `pnpm --filter @shelter/cli scan --sample clean` — see score 0/100, band `clean`.
-- run `pnpm --filter @shelter/cli scan --address 0xYOURADDRESS --chain base` — see the score, band and findings for a real address, read live from Base (Blockscout + your `BASE_RPC_URL` or the default public RPC).
+- run `pnpm --filter @shelter/cli scan --sample exposed` - see score 98.5/100, band `doxxed`, findings A–I with points, two warnings (OFAC counterparty, address poisoning), `linkedAddressCount: 2`.
+- run `pnpm --filter @shelter/cli scan --sample medium` - see band `linkable`, findings D, F and H.
+- run `pnpm --filter @shelter/cli scan --sample clean` - see score 0/100, band `clean`.
+- run `pnpm --filter @shelter/cli scan --address 0xYOURADDRESS --chain base` - see the score, band and findings for a real address, read live from Base (Blockscout + your `BASE_RPC_URL` or the default public RPC).
 
 ## Check the AI is private
 
-Explanations run on `z-ai/glm-5.3-flash` inside NEAR AI Cloud TEEs. The client proves the serving hardware, the enclave image, and the response signature before it shows the answer — the API key never reaches the browser.
+Explanations run on `z-ai/glm-5.3-flash` inside NEAR AI Cloud TEEs. The client proves the serving hardware, the enclave image, and the response signature before it shows the answer - the API key never reaches the browser.
 
-- copy `.env.example` to `.env` and set `NEAR_AI_API_KEY` — the key stays server-side / CLI-side; the browser calls a thin proxy that only adds the key and forwards your nonce unchanged.
-- run `pnpm verify-attestation` — see every check pass with a fresh 32-byte nonce: Intel DCAP quote, nonce + signing-address binding in the quote's report data, RTMR3 replayed from the event log, `app_compose` hash vs MRCONFIGID, for the gateway and each model candidate. Exit code is non-zero if any check fails.
-- run `pnpm --filter @shelter/cli explain --sample exposed` — see redacted findings (`Wallet 1`, `Counterparty 1`, no addresses or tx hashes) sent to the TEE model, a plain-language explanation, and the signature check table: the completion's signer must match exactly one verified report.
-- open the web app (`pnpm dev`) — see the Verified panel next to the AI answer: "Verified" or "Not verified", shortened nonce, signing address, every check with pass/fail, and a Re-check button with a new nonce. When a check fails the AI text is hidden.
-- no key? run `pnpm --filter @shelter/attest test` — the same checks run offline against recorded fixtures (pass, wrong nonce, tampered `app_compose`, missing `model_attestations`).
+- copy `.env.example` to `.env` and set `NEAR_AI_API_KEY` - the key stays server-side / CLI-side; the browser calls a thin proxy that only adds the key and forwards your nonce unchanged.
+- run `pnpm verify-attestation` - see every check pass with a fresh 32-byte nonce: Intel DCAP quote, nonce + signing-address binding in the quote's report data, RTMR3 replayed from the event log, `app_compose` hash vs MRCONFIGID, for the gateway and each model candidate. Exit code is non-zero if any check fails.
+- run `pnpm --filter @shelter/cli explain --sample exposed` - see redacted findings (`Wallet 1`, `Counterparty 1`, no addresses or tx hashes) sent to the TEE model, a plain-language explanation, and the signature check table: the completion's signer must match exactly one verified report.
+- open the web app (`pnpm dev`) - see the Verified panel next to the AI answer: "Verified" or "Not verified", shortened nonce, signing address, every check with pass/fail, and a Re-check button with a new nonce. When a check fails the AI text is hidden.
+- no key? run `pnpm --filter @shelter/attest test` - the same checks run offline against recorded fixtures (pass, wrong nonce, tampered `app_compose`, missing `model_attestations`).
+
+## Private move backend
+
+The confidential balance is owned by a NEAR account, which signs in and spends through the user's own wallet (Meteor); Shelter never holds that key.
+`packages/intents` talks to 1Click: verified quotes, sign-in, the confidential balance, deposits, and withdrawals from `intents.far` whose generated intent is checked before the wallet is asked.
+`packages/burner` runs each spend as a saved, resumable job: a private-move payout to a fresh address with its gas, or one public action from a one-time burner that is then retired.
+Gas is paid from the confidential balance in USDC and arrives as native ETH, so no new address is ever topped up from a known wallet.
+Details: [ONECLICK.md](docs/backend/ONECLICK.md), [BURNER.md](docs/backend/BURNER.md).
+
+- run `pnpm --filter @shelter/intents test` and `pnpm --filter @shelter/burner test` - see the withdrawal checks refuse 17 kinds of tampered intent, and the burner engine killed at every one of about 60 outside calls still pay exactly once.
+- run `pnpm demo --dry-run` - see the recorded mainnet run replayed with every quote, intent and transaction signature re-checked offline (needs the recording, made after the mainnet run).
+- `ONECLICK_JWT` (a 1Click partner key) is required for confidential quotes and withdrawals.
+  It is read by the CLI only and never sent to the browser.
+
+```sh
+pnpm --filter @shelter/cli near login   --account you.near          # Meteor signs in; shows the confidential balance
+pnpm --filter @shelter/cli near deposit --account you.near --asset usdc --amount 0.5
+pnpm --filter @shelter/cli vault create
+pnpm --filter @shelter/cli burner payout --account you.near --amount 0.2 --in 3h
+pnpm --filter @shelter/cli burner new    --account you.near --to 0xPayee --amount 0.1
+pnpm --filter @shelter/cli burner run    bj_... --account you.near   # approve each spend; Ctrl-C is safe
+```
+
+## Seed vault and address book
+
+`packages/keys` holds the local seed and the record of every derived address.
+One BIP-39 seed, encrypted at rest with Argon2id and AES-256-GCM; fresh EVM addresses come from fully hardened derivation (`m/44'/60'/0'/0'/n'`), and each index is handed out at most once, even across tabs, processes and crashes.
+Persistence: IndexedDB in the browser (`@shelter/keys/idb`), the built-in `node:sqlite` in the CLI (`@shelter/keys/sqlite`).
+Formats, parameters, recovery and limits: [docs/backend/KEYS.md](docs/backend/KEYS.md).
+
+- run `pnpm --filter @shelter/keys test` - see derivation vectors, tamper and wrong-passphrase rejection, lock enforcement, backup round trip, recovery, and 4 processes allocating from one SQLite file without a repeated index.
+- these addresses are not the ones MetaMask shows for the same phrase: every level is hardened, so a leaked burner key exposes nothing else.
 
 ## Libraries
 
-- viem 2.57.x (MIT) — EVM RPC reads (balance, nonce, ENS reverse), keccak-derived fixture addresses, EIP-191 signature recovery for response signatures
-- @phala/dcap-qvl 0.7.0 (Apache-2.0) — pure-JS DCAP quote verification (Intel TDX), runs in browser and Node
-- openai 7.45.1 (Apache-2.0) — OpenAI-compatible client, server-side only, pointed at `https://cloud-api.near.ai/v1`
-- vitest 3.x (MIT) — unit tests in packages/core and packages/attest
-- tsx 4.x (MIT) — runs the TypeScript CLI and scripts
+- viem 2.57.x (MIT) - EVM RPC reads (balance, nonce, ENS reverse), keccak-derived fixture addresses, EIP-191 signature recovery for response signatures
+- @phala/dcap-qvl 0.7.0 (Apache-2.0) - pure-JS DCAP quote verification (Intel TDX), runs in browser and Node
+- openai 7.45.1 (Apache-2.0) - OpenAI-compatible client, server-side only, pointed at `https://cloud-api.near.ai/v1`
+- vitest 3.x (MIT) - unit tests in every package
+- @scure/bip39 2.x, @scure/bip32 2.x (MIT) - seed phrase and hardened derivation in packages/keys; @noble/hashes also provides Argon2id and HKDF there
+- fake-indexeddb 6.x (Apache-2.0, tests only) - IndexedDB adapter tests in Node
+- zod 4.x (MIT) - 1Click response validation in packages/intents, through the tree-shakable `zod/mini` entry
+- @noble/curves 2.x, @noble/hashes 2.x, @scure/base 2.x (MIT) - ed25519 verification of 1Click quote signatures (SHA-256, base58)
+- json-stable-stringify 1.3.0 (MIT, tests only) - reference serializer the official 1Click SDK uses; tests check packages/intents produces identical bytes
+- @meteorwallet/sdk 1.0.24 (no license declared in the published package) - the CLI's local signing page asks Meteor for NEP-413 signatures; near-api-js 6.5.1 (MIT AND Apache-2.0) is its peer dependency
+- esbuild 0.28.2 (MIT) - bundles that signing page at run time; buffer 6.0.3 (MIT) - Node's Buffer in that page
+- tsx 4.x (MIT) - runs the TypeScript CLI and scripts
 - typescript 5.9 (Apache-2.0)
-- next 16 / react 19 (MIT) — web app
+- next 16 / react 19 (MIT) - web app
 - tailwindcss 4 / @tailwindcss/postcss 4 (MIT)
-- beUI components (MIT, vendored in `apps/web/components/`) — animated-badge, stateful button, card, collapsible for the Verified panel
-- motion 14.x (MIT), clsx 2.x (MIT), tailwind-merge 3.x (MIT), lucide-react 1.x (ISC) — beUI/shadcn component dependencies
+- beUI components (MIT, vendored in `apps/web/components/`) - animated-badge, stateful button, card, collapsible for the Verified panel
+- motion 14.x (MIT), clsx 2.x (MIT), tailwind-merge 3.x (MIT), lucide-react 1.x (ISC) - beUI/shadcn component dependencies
 
 ## Datasets
 
-Static label data is bundled in `packages/core/data/` and queried locally only — the user's address set is never sent to a label API.
+Static label data is bundled in `packages/core/data/` and queried locally only - the user's address set is never sent to a label API.
 
-- `data/exchange-labels.json` — exchange addresses on Ethereum and Base, built by `scripts/build-labels.ts` from [dawsbot/eth-labels](https://github.com/dawsbot/eth-labels) (MIT), commit `d9b21ae`.
-- `data/ofac-sanctioned.json` — OFAC-sanctioned ETH addresses, built by the same script from [0xB10C/ofac-sanctioned-digital-currency-addresses](https://github.com/0xB10C/ofac-sanctioned-digital-currency-addresses), `lists` branch (MIT), commit `abad1e7`.
+- `data/exchange-labels.json` - exchange addresses on Ethereum and Base, built by `scripts/build-labels.ts` from [dawsbot/eth-labels](https://github.com/dawsbot/eth-labels) (MIT), commit `d9b21ae`.
+- `data/ofac-sanctioned.json` - OFAC-sanctioned ETH addresses, built by the same script from [0xB10C/ofac-sanctioned-digital-currency-addresses](https://github.com/0xB10C/ofac-sanctioned-digital-currency-addresses), `lists` branch (MIT), commit `abad1e7`.
 
 To rebuild both datasets: `pnpm --filter @shelter/cli exec tsx ../../scripts/build-labels.ts`. To regenerate the fictional sample wallets: `pnpm --filter @shelter/cli exec tsx ../../scripts/gen-sample-wallets.ts`.
 
