@@ -3,6 +3,7 @@
  *
  *   near keys    --account A                read-only: keys registered on intents.near
  *   near login   --account A                Meteor signs a NEP-413 sign-in; shows balances
+ *   near balance --account A                the same sign-in, then only the confidential balances
  *   near quote   --account A --leg deposit|withdraw --asset usdc|eth --amount 0.25 [--to 0x..]
  *                                           sign-in, then a dry confidential quote. The quote
  *                                           authenticates the integration: it needs ONECLICK_JWT
@@ -44,6 +45,7 @@ export const ASSETS = {
 
 const usage = `shelter near keys  --account NAME.near
 shelter near login --account NAME.near [--no-open]
+shelter near balance --account NAME.near [--no-open]
 shelter near quote --account NAME.near --leg deposit|withdraw --asset usdc|eth --amount DECIMAL [--to 0x...] [--no-open]
 shelter near deposit --account NAME.near --asset usdc --amount DECIMAL [--tx 0x...]
 shelter near watch --deposit-address 0x... [--tx 0x...]`;
@@ -77,7 +79,7 @@ function printQuote(q: Quote, decimals: number, symbol: string) {
 }
 
 async function main() {
-  if (!sub || !["keys", "login", "quote", "deposit", "watch"].includes(sub)) fail(usage);
+  if (!sub || !["keys", "login", "balance", "quote", "deposit", "watch"].includes(sub)) fail(usage);
   if (sub === "watch") return watch(flag(args, "deposit-address") ?? fail(usage), undefined);
   if (!account) fail(`--account is required\n\n${usage}`);
 
@@ -99,7 +101,7 @@ async function main() {
         "",
         `  SEND EXACTLY     ${formatBaseUnits(q.amountIn, a.decimals)} ${a.symbol} on Base`,
         `  TO               ${q.depositAddress}`,
-        `  BEFORE           ${q.deadline} (later deposits are refunded to the balance)`,
+        `  BEFORE           ${q.deadline} (${minutesLeft(q.deadline!)}; if the full amount has not arrived by then, what did arrive is refunded to the balance)`,
         "",
         "Send it from your wallet now. This command waits for 1Click; Ctrl-C is safe, resume with:",
         `  pnpm --filter @shelter/cli near watch --deposit-address ${q.depositAddress}`,
@@ -122,11 +124,13 @@ async function main() {
   const signer = await createMeteorSigner({ accountId: account, openBrowser });
   try {
     const session = await client.signIn(signer);
-    console.log(`Signed in as ${session.accountId} with ${session.publicKey}`);
-    console.log(`  access token expires ${session.expiresAt().toISOString()}, session ends ${session.refreshExpiresAt().toISOString()}`);
+    if (sub !== "balance") {
+      console.log(`Signed in as ${session.accountId} with ${session.publicKey}`);
+      console.log(`  access token expires ${session.expiresAt().toISOString()}, session ends ${session.refreshExpiresAt().toISOString()}`);
+    }
 
     const balances = await client.balances(session);
-    console.log(balances.length ? "Confidential balances:" : "Confidential balances: none");
+    console.log(balances.length ? `Confidential balance of ${session.accountId}:` : `Confidential balance of ${session.accountId}: empty`);
     for (const b of balances) {
       const known = Object.values(ASSETS).find((a) => a.assetId === b.tokenId);
       console.log(`  ${known ? `${formatBaseUnits(b.available, known.decimals)} ${known.symbol}` : `${b.available} ${b.tokenId}`}  [${b.source}]`);
@@ -171,6 +175,11 @@ function saveDeposit(rec: DepositRecord) {
   writeFileSync(f, JSON.stringify(rec, null, 2), { mode: 0o600 });
 }
 
+function minutesLeft(deadline: string): string {
+  const m = Math.floor((Date.parse(deadline) - Date.now()) / 60_000);
+  return m > 0 ? `${m} min from now` : "already passed";
+}
+
 /** Polls a deposit until it settles; submits the tx hash first when --tx is given. */
 async function watch(depositAddress: string, fresh: Quote | undefined) {
   const rec: DepositRecord | undefined = fresh ? { quote: fresh, statuses: [] } : loadDeposit(depositAddress);
@@ -191,6 +200,11 @@ async function watch(depositAddress: string, fresh: Quote | undefined) {
       const line = `${s.status}${s.depositedAmount ? `  deposited ${s.depositedAmount}` : ""}`;
       if (line === last) return;
       console.log(`  ${new Date().toISOString()}  ${(last = line)}`);
+      if (s.status === "INCOMPLETE_DEPOSIT" && rec?.quote.deadline && s.depositedAmount) {
+        const missing = BigInt(rec.quote.amountIn) - BigInt(s.depositedAmount);
+        if (missing > 0n)
+          console.log(`    short by ${missing} base units: send the rest to ${depositAddress} before ${rec.quote.deadline} (${minutesLeft(rec.quote.deadline)}), or it is refunded`);
+      }
       if (rec) {
         rec.statuses.push({ at: new Date().toISOString(), status: s });
         saveDeposit(rec);
