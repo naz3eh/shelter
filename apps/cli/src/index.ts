@@ -7,7 +7,10 @@ Commands:
   scan                   scan wallets (--sample NAME | --address 0x.. --chain CHAIN)
   explain                explain a sample scan via the attested NEAR AI model (--sample NAME)
   demo [--dry-run]       run the judge demo
-  verify-attestation     check the NEAR AI TEE attestation`;
+  verify-attestation     check the NEAR AI TEE attestation
+  near                   confidential balance owner: keys, Meteor sign-in, dry confidential quotes
+  vault                  local seed vault and address book: status, create, import
+  burner                 one action from a one-time address: preview, new, run, list, show, cancel`;
 
 switch (cmd) {
   case "scan":
@@ -21,6 +24,15 @@ switch (cmd) {
     break;
   case "verify-attestation":
     await import("./verify-attestation.js");
+    break;
+  case "near":
+    await import("./near.js");
+    break;
+  case "vault":
+    await import("./vault.js");
+    break;
+  case "burner":
+    await import("./burner.js");
     break;
   default:
     console.log(usage);

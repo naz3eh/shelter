@@ -10,19 +10,28 @@
     "start": "tsx src/index.ts",
     "demo": "tsx src/demo.ts",
     "verify-attestation": "tsx src/verify-attestation.ts",
-    "typecheck": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json && tsc -p near-signer-page/tsconfig.json",
+    "near": "tsx src/index.ts near",
+    "vault": "tsx src/index.ts vault",
+    "burner": "tsx src/index.ts burner",
     "scan": "tsx src/index.ts scan",
     "explain": "tsx src/index.ts explain"
   },
   "dependencies": {
+    "@meteorwallet/sdk": "1.0.24",
+    "@scure/base": "^2.4.0",
     "@shelter/attest": "workspace:*",
     "@shelter/burner": "workspace:*",
     "@shelter/core": "workspace:*",
     "@shelter/intents": "workspace:*",
-    "@shelter/keys": "workspace:*"
+    "@shelter/keys": "workspace:*",
+    "buffer": "6.0.3",
+    "esbuild": "0.28.2",
+    "near-api-js": "6.5.1",
+    "viem": "^2.57.11"
   },
   "devDependencies": {
-    "@types/node": "^20.17.0",
+    "@types/node": "^24.19.2",
     "tsx": "^4.19.0"
   }
 }
