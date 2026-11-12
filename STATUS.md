@@ -1,107 +1,109 @@
 # Status
 
-**2026-11-06 13:04 UTC**
+**2026-11-09 09:50 UTC**
 
-Scoring fixes, sample-wallet regeneration and CI are committed on
-`fix/scan-ci-samples` (b51c213): check G now scores at confidence 1
-(all-nine-checks report = 98.5), wallets clustered by link findings
-inherit each other's A/B identity findings with the floor of 50, sample
-addresses are keccak-derived fixture keys instead of the well-known
-integer keys 1/2, and a GitHub Actions workflow runs
-install/typecheck/build/test. The branch could not be pushed: the stored
-PAT lacks `workflow` scope — the push and the PR are with the human.
+Backend session, local branch `feat/intents-quote-client`, not committed or pushed.
+The backend scope (G4, G5, G6, G9) is implemented; what remains is the approved mainnet run and the recording it produces.
+
+- G4.2: the confidential balance owner (`viraz.near`) signs in through Meteor; the NEAR key never leaves the wallet.
+  Confidential quotes need the partner key, and the balance lives on `intents.far` (salt `e110f317`, `imt:` tokens), both verified live.
+- G6: a crash-safe job engine runs private-move payouts (a fresh address with USDC and gas, kept) and burner actions (one transfer, then retired); gas is paid in USDC and delivered as native ETH.
+- G9: `demo record` and an offline replay that re-checks every signature.
+- Verified live, read-only, up to the point of signing; nothing has been signed or spent.
+
+Previous update (2026-11-07): G4.1 quote client and G5 seed vault.
 
 ## Goals
 
 | Goal | Status | Proof |
 | --- | --- | --- |
 | G1 Scan (chain reader) | done | `packages/core` (PR #1, merged `635d046`) |
-| G2 Exposure score A–I | done | `packages/core` engine + 31 vitest tests; this session: G confidence 1, inherited A/B on clustered wallets |
+| G2 Exposure score A–I | done | `packages/core` engine + 31 vitest tests; G confidence 1, inherited A/B on clustered wallets (PR #3) |
 | G3 Link graph + samples | done | `packages/core/fixtures/sample-wallets/{clean,medium,exposed}.json` regenerated from `shelter:sample:*` keccak keys |
-| G4 Intents layer | not started | `packages/intents` stub only |
-| G5 Seed vault | not started | `packages/keys` stub only |
-| G6 Burner engine | not started | `packages/burner` stub only |
-| G7 NEAR AI explainer + Verified panel | **done** | live run 2026-11-06T07:07Z by the human: `pnpm --filter @shelter/cli explain --sample exposed` — real Intel TDX DCAP quotes verified, TCB UpToDate, nonce / RTMR3 / app_compose / response-signature checks all passed; code merged in PR #2 (`f8c1959`) |
+| G4 Intents layer | done (local, unreviewed) | `packages/intents` (local branch): quote client, User-Session sign-in via Meteor (NEP-413, live 2026-11-08), balances, deposit notification, signed withdrawals split into prepare/submit with `intents.far` intent checks (generated intent verified live, unsigned). `fundBurner` one-call funding. CLI `near login/quote/deposit/watch`. 143 offline tests incl. `intents.far` intent checks with a real ed25519 wallet. Not yet: a real deposit and withdrawal (mainnet run) |
+| G5 Seed vault | done (local, unreviewed) | `packages/keys`: Argon2id + AES-256-GCM vault, `m/44'/60'/0'/0'/n'` with independent vectors, atomic allocation proven across 4 processes and a crash, IndexedDB + SQLite adapters, encrypted backup/restore, recovery scan; 50 offline tests |
+| G6 Burner engine | done (local, unreviewed) | `packages/burner`: resumable jobs for burner actions and private-move payouts, scheduled starts, planner hand-off (`schedulePlan`), memory/SQLite/IndexedDB stores, Base client with L1 fee; CLI `vault` (incl. `recover`) and `burner` (`preview`, `new`, `payout`, `run`, ...). Live read-only run up to the first approval; 33 offline tests incl. crash matrices for both job kinds (mutation-checked). Not yet: mainnet run. See `docs/backend/BURNER.md` |
+| G7 NEAR AI explainer + Verified panel | **done** | live run 2026-11-06T07:07Z by the human: `pnpm --filter @shelter/cli explain --sample exposed` - real Intel TDX DCAP quotes verified, TCB UpToDate, nonce / RTMR3 / app_compose / response-signature checks all passed; code merged in PR #2 (`f8c1959`) |
 | G8 Web screens | in progress | Verified panel on `/`; other screens not started |
-| G9 `pnpm demo --dry-run` | not started | `scripts/demo` stub only |
-| G10 README / LICENSE / threat model | in progress | README corrected (98.5, hashed fixture keys); threat model AI section added; other sections pending |
-| G11 Hosted demo | not started | — |
+| G9 `pnpm demo --dry-run` | done, waiting for the recording (local) | Recorder (`demo record`, deposits saved by `near deposit`) and offline replay that re-verifies quote, NEP-413 and transaction signatures; tested on a real partial run and a tampered copy. Waiting for the recorded mainnet run |
+| G10 README / LICENSE / threat model | in progress | README corrected (98.5, hashed fixture keys); threat model AI section and Intents client section added; other sections pending |
+| G11 Hosted demo | not started | - |
 
-Timeline: plan said G1–G3, G7, G8-fake-data by Nov 8. G1–G3 and G7 are
-done (G7 verified live Nov 6, inside the window); G8 has only the panel.
-**On track — G8 screens are the next push.**
+Timeline: G4 to G6 plus one approved mainnet run were due 2026-11-11, G9 by 2026-11-13.
+G4, G5, G6 and G9 are implemented; the mainnet run is waiting on the human.
 
 ## Build / typecheck / test
 
-- `pnpm install` — clean
-- `pnpm -r typecheck` — 7 projects pass
-- `pnpm build` — passes (Next production build; also verified with no
-  `.env` present, so CI needs no secrets)
-- `pnpm -r test` — 44 tests pass (core 31, attest 13), no network calls
-- `pnpm --filter @shelter/cli scan --sample exposed` — score **98.5/100**,
-  band `doxxed`, findings A–I, both warnings, `linkedAddressCount: 2`
-  (wallet 2 now shows inherited A and B)
-- `scan --sample medium` — 21.5, `linkable`, findings D, F, H
-- `scan --sample clean` — 0, `clean`
+Run 2026-11-09 on Node 26.12.1:
+
+- `pnpm install --frozen-lockfile` - clean
+- `pnpm -r typecheck` - 7 projects pass
+- `pnpm build` - passes (Next production build)
+- `pnpm -r test` - 270 tests pass (core 31, intents 143, keys 50, burner 33, attest 13), no network calls
+- `pnpm demo --dry-run` - prints that the recording does not exist yet (made after the mainnet run)
+- `pnpm --filter @shelter/cli scan --sample exposed` - score **98.5/100**, band `doxxed`; `medium` 21.5 `linkable`; `clean` 0
+- Live, read-only (2026-11-08/09): Meteor sign-in and balance read; confidential dry quotes; `burner preview` for both job kinds; the engine up to the first approval on a throwaway seed
 
 ## Open PRs
 
-- `fix/scan-ci-samples` — committed locally (b51c213), **push blocked**:
-  the stored GitHub PAT cannot create `.github/workflows/ci.yml` without
-  `workflow` scope. Human action needed:
-  `git push -u origin fix/scan-ci-samples` with a token that has
-  `workflow` scope (or SSH), then open the PR — do not merge.
-  Suggested PR body:
-
-  > Four narrow fixes from the scoring/samples/CI session:
-  >
-  > 1. **G confidence** — check G now scores `weight x 1` when its rule
-  >    fires (shared top UTC send hour, ≥2 outgoing txs each). A report
-  >    firing all nine checks scores 98.5, not 97.5. H stays at 0.5.
-  > 2. **Inherited identity** — connected components built from findings
-  >    with `linkedWallets` (C, D, E, G, I); every member of a cluster
-  >    inherits the A/B findings held by any other member (same check,
-  >    weight, confidence, points; detail marks it inherited). Per-wallet
-  >    floor of 50 now reaches linked wallets; the set score is unchanged
-  >    (each check still counts once). New tests cover the clustered case
-  >    and the alone-wallet negative case.
-  > 3. **Sample wallets** — all fixture addresses (scanned + unlabelled
-  >    counterparties) derive from `keccak256("shelter:sample:<profile>:<name>")`
-  >    instead of integer keys 1–20 that resolve to real mainnet accounts
-  >    with history. Regenerated JSON keeps the same behaviour: exposed
-  >    fires A–I + both warnings (doxxed, 98.5), medium is linkable
-  >    (D, F, H), clean scores 0.
-  > 4. **CI** — `.github/workflows/ci.yml`: ubuntu-latest, Node 20,
-  >    pnpm 10, `pnpm install --frozen-lockfile`, `pnpm -r typecheck`,
-  >    `pnpm build`, `pnpm -r test`. No secrets; tests are fully offline.
-  >
-  > Verified locally: install / typecheck / build / test all green;
-  > `scan --sample exposed` prints 98.5 doxxed.
+None open. Everything since PR #3 is on the local branch, awaiting review; nothing pushed.
 
 ## Blockers / what I need from a human
 
-1. **Push `fix/scan-ci-samples` and open the PR** — the stored PAT lacks
-   `workflow` scope, which GitHub requires to push files under
-   `.github/workflows/`. Either grant the token that scope, push from a
-   credential that has it, or use SSH.
-2. **`ONECLICK_JWT`** — still needed before G4's 1Click client can call
-   the real API. Register at https://partners.near-intents.org.
-3. No other blockers: `NEAR_AI_API_KEY` is in `.env` and the live path
-   is green.
+1. **Approve the tiny mainnet run**, step by step: a deposit of at least 0.15 USDC into the confidential balance, a payout, and one burner payment (about 0.26 USDC each, all fees included).
+2. **Decide the demo identity:** the recording names the NEAR account, the payout and burner addresses, and the payee. Set `SHELTER_NEAR_ACCOUNT` and `SHELTER_DEMO_PAYEE` to ones you are happy to make public before the run.
+3. `@shelter/core`'s `planRemediation` is still a stub (not ours); its owner should emit the `MoveStep`s defined in `packages/burner/src/plan.ts`.
 
 ## Next 3 tasks
 
-1. G8 web screens: setup → scan results → plan → move tracker → burner →
-   re-scan before/after, wired to `packages/core` on sample data, with
-   the VerifiedPanel beside each AI answer.
-2. G4 1Click intents client (quotes `dry: true`, deposit/withdraw/status,
-   `X-API-Key` from `ONECLICK_JWT`) once the JWT lands.
-3. G5 seed vault + hardened derivation (`packages/keys`).
+1. The approved mainnet run, then `demo record` and commit the recording.
+2. Record the live answers to the open questions in `docs/backend/ONECLICK.md` (key accepted by `intents.far`, slippage buffer refunded, status timings).
+3. Human review, then commit and PR.
 
 ## Interface changes
 
-None in `packages/intents` (untouched). Behaviour changes inside
-`packages/core` only: `CHECK_CONFIDENCE.G` is now `1`, and
-`ScanReport.findings` / `ExposureReport.findings` can contain A/B
-findings marked `inherited:` for wallets clustered to an identified
-wallet. No exported signatures changed.
+`packages/intents` (no consumers yet; documented in `docs/backend/ONECLICK.md`):
+
+- `Confidentiality` is now the API enum `"public" | "basic" | "advanced"`
+  (the draft `"none"` is not a valid API value).
+- `QuoteRequest` mirrors API field names (`originAssetId`,
+  `destinationAssetId`, `swapType`, `amount`, explicit `depositType` /
+  `recipientType` / `refundType`); use `privateDepositRequest` /
+  `privateWithdrawRequest` to build it.
+- `Quote.deadline` and `Quote.depositAddress` are optional (dry quotes
+  carry neither); `Quote` adds provenance (signature, verified flag) and
+  the full wire response.
+- `IntentStatus` adds `UNKNOWN`; `StatusResult` adds chain-qualified
+  transactions, settled amounts and `quoteVerified`.
+- `deposit`, `withdraw`, `fundBurner` keep their names and are real:
+  `fundBurner` now takes `{ burnerAddress, amount, payWithAssetId?, signer,
+  approve?, client? }` and returns a `WithdrawResult`.
+- New: NEP-413 signing and sign-in (`signIn`, `UserSession`), `balances`,
+  `submitDeposit`, `prepareSignedIntent` / `submitSignedIntent` /
+  `executeSignedIntent`, `waitForStatus`, the `intents.far` constants, and
+  error kinds `partner_auth_required`, `intent_mismatch`,
+  `key_not_registered`, `signer_rejected`, `session_expired`.
+
+`packages/burner` (the stub's `createBurner` / `markUsed` / `retireBurner`
+are kept as low-level helpers taking the address book):
+
+- `createBurnerEngine`, `BurnerJob` (format v1), actions `erc20_transfer`
+  and `hold`, `schedulePlan` + `MoveStep`, `createBaseChain`, job stores
+  (memory, `@shelter/burner/sqlite`, `@shelter/burner/idb`).
+
+`packages/keys` (additive; names kept):
+
+- `createSeedVault(options?)` now takes `{ store, kdf, random, now }`;
+  `SeedVault` keeps `isUnlocked`/`unlock`/`lock` and adds `exists`,
+  `vaultId`, `create`, `importMnemonic`, `changePassphrase`, `address(i)`,
+  `account(i)` (viem `LocalAccount`, no private key exposed).
+- `deriveHardened(vault, index)` unchanged in shape (`{ path, address }`);
+  `DerivedKey` keeps `path` and `address` only.
+- New: `createAddressBook`, `createMemoryStore`, `KeysError`, subpaths
+  `@shelter/keys/idb` and `@shelter/keys/sqlite` (Node only).
+- Integration dependency: `@shelter/core`'s `AddressBook` (user labels
+  for scanned wallets) is unchanged and separate from the derived-address
+  book; the planner will need `AddressRecord` ids for burner and
+  destination steps (see Decision 4).
+
+Repo-wide: `engines.node` is `>=24`; CI runs Node 24 and 26.
