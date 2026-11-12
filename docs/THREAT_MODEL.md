@@ -23,7 +23,7 @@ free of leakage:
   `rpc.mainnet.near.org` (configurable). The RPC sees the queried account id.
 - **Labels are local only.** The exchange label set (dawsbot/eth-labels) and
   the OFAC list (0xB10C) are bundled as static JSON inside `packages/core`.
-  Lookups are local `Set`/`Map` reads — the user's address set is never sent
+  Lookups are local `Set`/`Map` reads - the user's address set is never sent
   to a label API.
 
 ## AI explainer
@@ -37,13 +37,13 @@ every `0x` address is replaced by a stable alias (`Wallet 1`,
 `Counterparty 1`, ...), all transaction hashes are dropped, and only check
 letter, kind, points, label names (e.g. "Coinbase"), ENS/.near names and
 amounts survive. The model never sees a wallet address, a tx hash, or an
-address-book link — and it never decides amounts or actions. A unit test
+address-book link - and it never decides amounts or actions. A unit test
 asserts no `0x` address or hash appears in the request body. The route is
 stateless: it does not log request bodies, store data, or run analytics.
 
 **API key.** `NEAR_AI_API_KEY` exists only on the server (Next route
 handlers) and in the CLI. The browser calls `/api/attestation`, a thin
-proxy that adds the key and forwards the client's nonce unchanged — all
+proxy that adds the key and forwards the client's nonce unchanged - all
 verification logic runs in the browser on the returned report. The proxy
 cannot choose or alter the nonce.
 
@@ -60,13 +60,13 @@ and that the report answering *our* request is the one we verified.
 **What it does not prove.**
 
 - **Instance ≠ signer.** A matching model signing key does not prove the
-  report and the completion came from the same serving instance — NEAR's
+  report and the completion came from the same serving instance - NEAR's
   docs warn that instances may share signing keys. A malicious sibling
   instance with the same key could sign a different completion. We still
   require the signature signer to match exactly one verified report, but
   treat this as necessary-not-sufficient.
 - **GPU evidence.** NVIDIA GPU attestation payloads are reported as
-  "present, not verified" — no open-source verifier is wired in, so GPU
+  "present, not verified" - no open-source verifier is wired in, so GPU
   confidentiality claims are unchecked.
 - **DCAP collateral source.** DCAP verification fetches collateral
   (TCB info, QE identity, CRLs) from Phala's public PCCS over HTTPS, in
@@ -80,10 +80,118 @@ and that the report answering *our* request is the one we verified.
   fresh for this check, but verification is point-in-time; Re-check is
   manual and issues a new nonce each run.
 
-If any check fails — missing `model_attestations`, a wrong nonce echo, a
+If any check fails - missing `model_attestations`, a wrong nonce echo, a
 mismatched RTMR3 or MRCONFIGID, a bad quote, or a signature whose signer
-matches no (or more than one) verified report — the UI hides the AI text
+matches no (or more than one) verified report - the UI hides the AI text
 and the CLI exits non-zero.
+
+## Intents client (G4)
+
+Wire details and sources: `docs/backend/ONECLICK.md`.
+
+**What 1Click sees.** Each quote reveals the asset, amount, deadline, the
+owner's Intents account id and, for a withdrawal, the fresh destination
+address. Quotes never include `connectedWallets` or `sessionId`, so 1Click is
+not handed the user's other addresses or a cross-request identifier; a test
+asserts the exact request fields. Status reads reveal the deposit address
+being tracked.
+
+**Confidentiality is not silently downgraded.** Requests default to
+`confidentiality: "advanced"`. `public`, and public `INTENTS` balances, are
+refused unless the client is created with an explicit `allowPublic` flag that
+Shelter's own flows never set. The quote signature does not cover the
+confidentiality level, so the client also requires 1Click's echoed request to
+match what was sent; a mismatch rejects the quote.
+
+**Refunds stay confidential.** The deposit and withdrawal leg builders always
+refund to the owner's confidential balance and have no option for a public
+refund address. If a route cannot do that, the quote fails instead of falling
+back.
+
+**Quote integrity.** Every quote's ed25519 signature is verified against the
+1Click manager key before it is used, and only verified execution quotes with
+at least 5 minutes left can be funded (`assertFundable`). This detects a
+tampered deposit address or amount between 1Click and the device. It does not
+protect against 1Click itself, which holds the signing key.
+
+**Credentials.** The optional partner JWT is read by the CLI or a server and
+sent as `X-API-Key`; it is never bundled into the browser. Error messages are
+built with every configured credential redacted, including when the server
+echoes one back.
+
+**Trust that remains.** Confidential Intents hides deposits and withdrawals
+from public chain observers, not from its operators: 1Click and the
+Confidential Intents operators can see the owner account, amounts and
+destinations. Whatever RPC or indexer later confirms receipts also sees the
+addresses it is asked about.
+
+## Seed vault and address book (G5)
+
+Formats and parameters: `docs/backend/KEYS.md`.
+
+**At rest.** The vault holds only the BIP-39 seed, encrypted with AES-256-GCM under an Argon2id key (64 MiB, t=3, p=4) from the user's passphrase, with a fresh salt and IV on every write.
+All header fields are authenticated, KDF costs outside a fixed range are refused before any work, and no passphrase, mnemonic, seed or private key is stored in plaintext; tests scan the raw IndexedDB and SQLite contents for them.
+Strength still depends on the passphrase: an attacker with the file can guess offline at Argon2id cost.
+
+**In use.** Keys are derived on device and used only through signing calls; no API returns a private key.
+Every derivation level is hardened, so one leaked burner key reveals neither the seed nor other burners.
+`lock()` blocks all further derivation and signing, including through account objects taken earlier, and zeroes the buffers it holds; JavaScript cannot guarantee that copies or the passphrase and mnemonic strings are erased.
+
+**Address book.** Records (index, address, purpose, retired flag) stay on the device and are never uploaded.
+They are not encrypted locally, so someone who can read the browser profile or `keys.db` can link the user's derived addresses; the exported backup is encrypted with a key derived from the seed.
+A retired address is never issued again, and restore or recovery can only add retirements.
+
+**Recovery.** Rebuilding the book scans derived addresses for on-chain use through a caller-supplied check, which reveals each scanned address to the RPC that answers it, one at a time.
+
+## Confidential balance owner and signed withdrawals (G4.2)
+
+Wire details: `docs/backend/ONECLICK.md`; signing bridge: `apps/cli/src/near/meteor-signer.ts`.
+
+**The NEAR key stays in the wallet.** The confidential balance is owned by the user's NEAR account (NEP-413).
+Shelter never holds that key: the CLI serves a one-shot page on `127.0.0.1`, and Meteor signs there on the user's click.
+The page never signs in to Meteor (which would add an access key to the account) and never sends a transaction.
+Every signature Meteor returns is verified locally over the exact payload, and the key must be registered for the account on `intents.near`, before it is used.
+
+**The local signing bridge.** It binds `127.0.0.1` only, checks the `Host` header (DNS rebinding), requires a 32-byte one-time token in a custom header (other sites cannot send it without a CORS preflight, which is never answered), accepts results only from its own origin, caps bodies at 16 KB, and serves a strict CSP with `frame-ancestors 'none'`.
+The token arrives in the URL fragment and is removed from the address bar before Meteor is called.
+Nothing secret crosses the bridge: the request is public data and the answer is a public key and a signature.
+Any local process running as the user can still reach the port; such a process could also read the user's files, so this adds no new exposure.
+
+**Sign-in.** The User-Session sign-in signs an empty intent list: it moves nothing and only uses up its own nonce.
+Access and refresh tokens live in memory, are refreshed shortly before expiry, are redacted from every error, and are only ever sent to `/v0/account/*`.
+
+**Partner key.** Confidential quotes, `generate-intent` and `submit-intent` require the partner key (`ONECLICK_JWT`).
+It identifies the integration to 1Click, so 1Click can attribute the user's confidential activity to Shelter.
+It stays in the CLI's `.env`; it is never put in a browser bundle.
+
+**1Click writes the intent the user signs.** The withdrawal intent is generated by 1Click, so it is checked before the wallet is asked.
+For a confidential quote it must be addressed to `intents.far`, use that contract's published salt, be signed as the balance owner, expire within 7 days, and contain only `transfer`s of the quote's asset (as the `imt:` token of the documented Treasury) totalling at most the quoted input, to the quote's deposit address.
+Any other intent kind, contract, token, receiver, field or amount is refused before the user sees a signing prompt.
+1Click can still choose the deposit address and the quoted price; the quote signature binds those to what the user approved.
+A signed but unexecuted intent stays valid for up to 3 days (1Click's choice); after the quote deadline, funds reaching the deposit address are refunded to the confidential balance, not delivered.
+
+**Unverified.** `intents.far` has no public RPC, so Shelter cannot check its key registry, salt or balances directly; it relies on the published constants and 1Click's balance endpoint.
+
+## Burner engine (G6)
+
+Design and recovery rules: `docs/backend/BURNER.md`.
+
+**Unlinked gas.** Each burner gets gas and the action amount only from the confidential balance (gas plan A: the gas is paid in USDC and arrives as native ETH), never from a known address, and every refund returns to that balance.
+Gas is funded before the asset, so the asset never waits on an address that cannot move it.
+
+**One address, one action.** The address is derived fresh, checked on chain to have no history, used for one transaction, and retired; the address book never issues it again.
+Paying one of the user's own Shelter addresses from a burner is refused, since it would link the two.
+A leftover is swept back only when it is at least the 1Click deposit minimum; smaller dust stays on the retired address, whose key the seed can still recover.
+
+**No double spend after a crash.** A signed withdrawal is stored before it is submitted and a signed transaction before it is broadcast, so a resume repeats the same bytes: `intents.far` accepts each nonce once, and an EVM transaction cannot be mined twice.
+One runner holds a job at a time (lease plus compare-and-swap on every save).
+
+**Approval of every spend.** Each withdrawal and each burner transaction waits for an explicit approval showing amounts and fees; Meteor shows each withdrawal again.
+
+**What still links.** The Base RPC sees every burner address the engine reads; use your own RPC.
+1Click and the Confidential Intents operators see the owner account, the amounts and the burner.
+Timing and amounts can still be matched on quiet routes: the burner receives its gas and asset within minutes of each other and acts soon after, and an exact payment amount is visible on chain.
+The local job database links the burner to the action and the recipient, like the address book.
 
 ## Limits
 
