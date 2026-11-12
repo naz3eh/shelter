@@ -193,6 +193,40 @@ One runner holds a job at a time (lease plus compare-and-swap on every save).
 Timing and amounts can still be matched on quiet routes: the burner receives its gas and asset within minutes of each other and acts soon after, and an exact payment amount is visible on chain.
 The local job database links the burner to the action and the recipient, like the address book.
 
+## Shelter Connect
+
+Design and limits: `docs/backend/CONNECT.md`.
+
+**One address per dapp, from the local seed.** Each dapp origin gets its own derived address, checked on chain to have no history, and bound to that origin; requests from any other origin are refused.
+The address never comes from Chain Signatures, whose addresses derive publicly from the NEAR account.
+
+**Funded only from the confidential balance.** The budget, the gas and any ETH a transaction sends arrive through 1Click withdrawals, so on chain the funder is the Intents treasury, never a known wallet.
+Each withdrawal waits for an approval in the terminal and a signature in Meteor.
+
+**Linkage check before approval.** A request that names the user's linked wallets, NEAR accounts or any other Shelter address (as recipient, anywhere in calldata, in a message or in typed data) is refused before the user is asked and before anything is signed.
+So is a request from another origin, a domain WalletConnect Verify flags, a sign-in for another domain, a raw-hash `eth_sign`, and a contract creation.
+The check only knows the identities it is given: a public wallet the user never added is not protected.
+
+**Every signature is approved.** Each transaction and each message or typed-data signature is shown decoded, with its warnings, and signed only after a yes.
+
+**No double send after a crash.** A signed transaction is stored before it is broadcast; sweeps follow the burner engine's rules (saved quote and signed transfer, repeated bytes on resume).
+
+**What still links.** The dapp sees everything done from its address.
+Funding and use close together in time, with matching amounts, can be paired by an observer on a quiet route.
+The Base RPC, 1Click and the Confidential Intents operators, and the WalletConnect relay each see part of the picture (addresses, amounts, which dapp talks to which session).
+WalletConnect session keys on disk (`~/.shelter/walletconnect/`, 0700) let whoever reads them read and answer this wallet's WalletConnect traffic, though not sign: signing still needs the unlocked vault and an approval.
+The local Connect database ties each dapp to its address, like the address book.
+
 ## Limits
 
-TODO
+What Shelter does not protect against, across all parts:
+
+- **A compromised device.** The seed vault, the WalletConnect session keys, the address book and the Connect database are all on the device; malware that reads memory while the vault is unlocked, or logs the passphrase, gets everything.
+- **The user's own approvals.** Shelter decodes and warns, but a user who approves a transaction that pays a linked wallet through an address Shelter does not know, or signs an unlimited allowance to a malicious spender, is not stopped.
+- **Identities Shelter was not told about.** The linkage check only blocks what is in the linked list, the address book and the owner account. A public wallet never added with `connect link add` is not protected.
+- **Timing and amount correlation.** A withdrawal from the Intents treasury followed minutes later by a matching deposit, swap or payment can be paired by an observer, especially on quiet routes and with round amounts. Shelter does not add delays or split amounts by default.
+- **The operators in the path.** 1Click and the Confidential Intents operators see the owner account, amounts and destinations; NEAR AI sees the explained scan summary (inside an attested TEE); the Base and NEAR RPCs, Blockscout and the WalletConnect relay each see which addresses or sessions are used.
+- **Off-chain fingerprints.** IP addresses, browser fingerprints, dapp accounts, emails and anything typed into a dapp link the user without any on-chain trace.
+- **Public recordings.** A demo recording or published transaction links its NEAR account to every address in it; that run's privacy is given up by publishing it.
+- **Dust and unsupported tokens.** Amounts below 1Click's minimums and tokens 1Click does not list stay on retired addresses; they are recoverable from the seed but moving them later links that address again.
+- **Availability.** If 1Click or the Intents contracts are unavailable, funds in the confidential balance cannot move until they return; Shelter holds no fallback route.

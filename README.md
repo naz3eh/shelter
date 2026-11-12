@@ -2,6 +2,25 @@
 
 Shelter is a privacy remediation app. Your device scans your public wallets (EVM chains such as Base), computes a 0-100 exposure score, and plans a private move into NEAR Confidential Intents through the 1Click API, using a one-time burner wallet for each public action. A NEAR AI Cloud TEE model is used only to explain results, and its attestation is verified on device. Nothing is kept server-side: keys, the address book, scan data and the label lists all stay on the user's device.
 
+## Try it (judges)
+
+Every step below runs offline with no keys, funds or accounts unless it says otherwise.
+
+1. run `pnpm install && pnpm -r test` - see every package's tests pass with no network calls (scan engine, 1Click client, seed vault, burner engine, Shelter Connect, TEE attestation).
+2. run `pnpm --filter @shelter/cli scan --sample exposed` - see a 98.5/100 exposure score with the findings that link the sample wallets.
+3. run `pnpm --filter @shelter/connect test` - see a dapp swap through a per-dapp address, every kind of linking request refused before anything is signed, and a close killed at each of its 70 outside calls that still returns every token exactly once.
+4. run `pnpm demo -- --dry-run --recording <file>` on a recorded mainnet session - see every 1Click quote signature, every NEP-413 withdrawal signature and every Base transaction checked offline (see [Recorded mainnet runs](#recorded-mainnet-runs)).
+5. With a free WalletConnect project id in `.env`: run `pnpm --filter @shelter/cli connect start --sandbox`, then paste any dapp's WalletConnect link - see the dapp connect to a throwaway address, get real signatures, and get "Blocked by Shelter" for a request that names a wallet you linked with `connect link add`.
+
+## Built at NEAR HACKATHON
+
+Built from 2026-11-03 for NEAR HACKATHON; there is no pre-hackathon code.
+What NEAR does here, concretely:
+
+- **NEAR Intents confidential balance (1Click API, `confidentiality: advanced`)** is where the user's money rests between uses; every deposit, withdrawal, burner funding and dapp funding goes through it, so on Base the funder of every Shelter address is the Intents treasury, not the user.
+- **NEP-413 signatures from the user's NEAR wallet (Meteor)** authorize each withdrawal from that balance; Shelter never holds the NEAR key.
+- **NEAR AI Cloud** runs the model that explains a scan inside a TEE; the CLI and web app verify its Intel TDX attestation with a fresh nonce before showing anything.
+
 ## Layout
 
 ```
@@ -11,6 +30,7 @@ packages/core     exposure engine, chain reader, label lists, link graph, addres
 packages/keys     seed vault, hardened derivation
 packages/intents  1Click client, confidential balance, status tracking
 packages/burner   one-time address lifecycle
+packages/connect  the confidential balance in any dapp over WalletConnect, one unlinked address per dapp
 packages/attest   NEAR AI attestation check
 scripts           dataset builders and sample-wallet generator
 scripts/demo      recorded mainnet run for dry-run replay
@@ -66,12 +86,41 @@ Details: [ONECLICK.md](docs/backend/ONECLICK.md), [BURNER.md](docs/backend/BURNE
 
 ```sh
 pnpm --filter @shelter/cli near login   --account you.near          # Meteor signs in; shows the confidential balance
+pnpm --filter @shelter/cli near balance --account you.near          # the same, balances only
 pnpm --filter @shelter/cli near deposit --account you.near --asset usdc --amount 0.5
 pnpm --filter @shelter/cli vault create
 pnpm --filter @shelter/cli burner payout --account you.near --amount 0.2 --in 3h
 pnpm --filter @shelter/cli burner new    --account you.near --to 0xPayee --amount 0.1
 pnpm --filter @shelter/cli burner run    bj_... --account you.near   # approve each spend; Ctrl-C is safe
 ```
+
+## Use the confidential balance in any dapp
+
+`packages/connect` makes Shelter a WalletConnect wallet.
+Each dapp gets its own address from the local seed, funded from the confidential balance with the budget you choose and topped up just in time, so on chain its funder is the public Intents treasury.
+Every request passes a linkage check before you approve it: anything that names your own wallets, your NEAR account or another Shelter address is refused, from a token transfer to a swap recipient buried in calldata to a sign-in message.
+Closing a dapp sweeps what is left back into the confidential balance and retires the address.
+Details: [CONNECT.md](docs/backend/CONNECT.md).
+
+- run `pnpm --filter @shelter/connect test` - see a swap through a fake dapp router, each kind of linking request refused before anything is signed, just-in-time gas and ETH top-ups, and a close killed at each of its 70 outside calls that still returns everything exactly once.
+- `WALLETCONNECT_PROJECT_ID` (a free Reown Cloud project) is needed to pair with real dapps.
+- run `connect start --sandbox` and paste any dapp's WalletConnect link (Connect, then WalletConnect, then copy the link) - see it connect to a throwaway address, get real signatures, and get refused when a request names a wallet you linked; no vault, partner key or funds needed.
+- the running wallet takes more links at its `wc link>` prompt, one per dapp, each with its own address.
+
+```sh
+pnpm --filter @shelter/cli connect link add 0xYourMainWallet --label "main wallet"
+pnpm --filter @shelter/cli connect start --account you.near --budget 5   # then paste the dapp's wc: link
+pnpm --filter @shelter/cli connect list
+pnpm --filter @shelter/cli connect close ca_... --account you.near        # sweep back, retire the address
+```
+
+Verified on Base mainnet on 2026-11-12: Uniswap funded from the confidential balance, a 0.5 USDC swap, a send to the linked main wallet blocked, and a close that returned the USDC and ETH and retired the address (transactions in [CONNECT.md](docs/backend/CONNECT.md#verified-on-mainnet-2026-11-12-funded)).
+
+## Recorded mainnet runs
+
+`demo record` assembles a recording from the local databases: deposits, burner jobs and Connect sessions (`--connect ca_...` adds the session and its funding jobs).
+`pnpm demo -- --dry-run [--recording PATH]` replays it with no network: 1Click quote signatures (and that the fields used are the signed ones), NEP-413 withdrawal signatures, every Base transaction's hash, sender and effect, every dapp message or typed-data signature, and every blocked request blocked again by the linkage check.
+A recording holds no secret, but it ties the NEAR account to every address in it; only the linked wallets a block named are included.
 
 ## Seed vault and address book
 
@@ -96,6 +145,7 @@ Formats, parameters, recovery and limits: [docs/backend/KEYS.md](docs/backend/KE
 - json-stable-stringify 1.3.0 (MIT, tests only) - reference serializer the official 1Click SDK uses; tests check packages/intents produces identical bytes
 - @meteorwallet/sdk 1.0.24 (no license declared in the published package) - the CLI's local signing page asks Meteor for NEP-413 signatures; near-api-js 6.5.1 (MIT AND Apache-2.0) is its peer dependency
 - esbuild 0.28.2 (MIT) - bundles that signing page at run time; buffer 6.0.3 (MIT) - Node's Buffer in that page
+- @reown/walletkit 1.6.0, @walletconnect/core, utils and types 2.25.0 (WalletConnect Community License) - Shelter Connect's WalletConnect wallet; Portions © 2025 Reown, Inc. All Rights Reserved. The license requires using Reown's relay network, which Connect does
 - tsx 4.x (MIT) - runs the TypeScript CLI and scripts
 - typescript 5.9 (Apache-2.0)
 - next 16 / react 19 (MIT) - web app

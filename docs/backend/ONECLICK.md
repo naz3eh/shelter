@@ -148,6 +148,8 @@ Withdrawal recipients were random throwaway Base addresses nobody controls.
   Minimum 150000 (0.15 USDC); 149999 answers 400 "Amount is too low for bridge".
 - **Withdrawal leg** (confidential balance to a Base address, same asset): the only fee is a flat `withdrawFee`, 4800 (0.0048 USDC) or 1120000000000 wei (0.00000112 ETH, about $0.0025), at every size tried.
   No minimum was hit down to 0.001 USDC or 0.000001 ETH out, so gas plan A (withdrawing a little native ETH to the burner) works.
+- **Deposit minimums from Base, re-checked 2026-11-12 with dry quotes:** USDC 150000 (0.15); native ETH 1e11 wei (0.0000001), smaller answers "try at least 100000000000"; WETH and cbBTC accepted 0.000001.
+  1Click lists 18 Base tokens; native ETH (`nep141:base.omft.near`) has no contract address, and some ids use other forms (`...omdep.near`, `1cs_v1:base:erc20:0x...`).
 - **Slippage on `EXACT_OUTPUT`:** `amountIn` is `minAmountIn / (1 - slippage)`; `minAmountIn` is the real cost (output plus `withdrawFee`).
   At the default 50 bps, 0.25 USDC out quoted 0.256081 in against a real cost of 0.2548.
   `slippageTolerance: 0` is accepted and makes `amountIn` equal `minAmountIn`.
@@ -171,3 +173,10 @@ Source: [Moving solver liquidity into Confidential Intents](https://docs.near-in
 - Whether the slippage buffer on an `EXACT_OUTPUT` withdrawal is refunded to the confidential balance, or spent; only a real withdrawal shows it.
 - Status transitions and timing of a real deposit and withdrawal (the approved mainnet run).
 - Whether a confidential withdrawal signed by a key registered only on `intents.near` is accepted by `intents.far`.
+
+## Deadlines (live 2026-11-12)
+
+An execution quote carries two times: the deadline Shelter requested (30 minutes by default) and `quote.deadline` / `timeWhenInactive`, the deposit address expiry (3 days in the live case).
+The requested one is the cutoff: a deposit that was still short at the 30-minute mark was refunded to the refund recipient with `refundReason: QUOTE_EXPIRED`, and a top-up sent after it stayed on the deposit address.
+`Quote.deadline` is therefore the earlier of the two; `Quote.timeWhenInactive` keeps the address expiry.
+`/v0/status` sends `null` for amounts it does not know yet (`amountIn`, `depositedAmount`, `refundReason`, ...); the client reads them as absent.
