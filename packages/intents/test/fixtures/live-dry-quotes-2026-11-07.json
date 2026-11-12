@@ -1,0 +1,89 @@
+{
+  "_note": "Real 1Click /v0/quote dry responses recorded 2026-11-07 with no credentials. Recipient/refund is a random throwaway address nobody controls. Used to check the real manager-key signature offline.",
+  "sameAssetUsdc": {
+    "quote": {
+      "amountIn": "5000000",
+      "amountInFormatted": "5.0",
+      "amountInUsd": "4.998665000000",
+      "minAmountIn": "5000000",
+      "amountOut": "4997600",
+      "amountOutFormatted": "4.9976",
+      "amountOutUsd": "4.996265640800",
+      "minAmountOut": "4972612",
+      "timeEstimate": 37,
+      "refundFee": "2400",
+      "withdrawFee": "2400"
+    },
+    "quoteRequest": {
+      "dry": true,
+      "depositMode": "SIMPLE",
+      "swapType": "EXACT_INPUT",
+      "slippageTolerance": 50,
+      "originAsset": "nep141:base-0x833589fcd6edb6e08f4c7c32d4f71b54bda02913.omft.near",
+      "depositType": "ORIGIN_CHAIN",
+      "destinationAsset": "nep141:base-0x833589fcd6edb6e08f4c7c32d4f71b54bda02913.omft.near",
+      "amount": "5000000",
+      "refundTo": "0x38579a0a7e2ad41050b95abcb58448dbe565e127",
+      "refundType": "ORIGIN_CHAIN",
+      "recipient": "0x38579a0a7e2ad41050b95abcb58448dbe565e127",
+      "recipientType": "DESTINATION_CHAIN",
+      "deadline": "2026-11-07T16:19:28.388Z",
+      "confidentiality": "public",
+      "quoteWaitingTimeMs": 0,
+      "insured": false,
+      "appFees": []
+    },
+    "signature": "ed25519:2uxGBTr52ZmayDQ2Sp3BVz2F7W5QLTmy15GJXLUqfgB6UaGAbYpVUZsc4epWDdhVVR6qSiDSFDn1WVvSjGkG9rnc",
+    "timestamp": "2026-11-07T15:49:29.478Z",
+    "correlationId": "6c050414-7ec4-43f9-bea3-7611717026bd"
+  },
+  "usdcToEth": {
+    "quote": {
+      "amountIn": "1000000",
+      "amountInFormatted": "1.0",
+      "amountInUsd": "0.999733000000",
+      "minAmountIn": "1000000",
+      "amountOut": "445674443028409",
+      "amountOutFormatted": "0.000445674443028409",
+      "amountOutUsd": "0.995721383870",
+      "minAmountOut": "443446070813266",
+      "timeEstimate": 39,
+      "refundFee": "2400",
+      "withdrawFee": "560000000000"
+    },
+    "quoteRequest": {
+      "dry": true,
+      "depositMode": "SIMPLE",
+      "swapType": "EXACT_INPUT",
+      "slippageTolerance": 50,
+      "originAsset": "nep141:base-0x833589fcd6edb6e08f4c7c32d4f71b54bda02913.omft.near",
+      "depositType": "ORIGIN_CHAIN",
+      "destinationAsset": "nep141:base.omft.near",
+      "amount": "1000000",
+      "refundTo": "0x38579a0a7e2ad41050b95abcb58448dbe565e127",
+      "refundType": "ORIGIN_CHAIN",
+      "recipient": "0x38579a0a7e2ad41050b95abcb58448dbe565e127",
+      "recipientType": "DESTINATION_CHAIN",
+      "deadline": "2026-11-07T16:19:29.694Z",
+      "confidentiality": "public",
+      "quoteWaitingTimeMs": 0,
+      "insured": false,
+      "appFees": [
+        {
+          "recipient": "5880ad2b362620fadf759cbceb1cd5737ce8c6ed7fb8e9942881e6731f9247dd",
+          "fee": 20
+        }
+      ]
+    },
+    "signature": "ed25519:NZAwEXhe8x32FunRFKkoFfe5DQfC3FxeQNXRNRA3p2zCiCnCRxvERKakSMGLxu9WLeNbg5qw4jZmrRZnnEqvvwr",
+    "timestamp": "2026-11-07T15:49:29.783Z",
+    "correlationId": "022fbd64-b59d-42bc-b38b-e38f996e55ef"
+  },
+  "confidentialNoSession": {
+    "message": "User authentication is required for confidential intent quotes",
+    "error": "Unauthorized",
+    "statusCode": 401,
+    "timestamp": "2026-11-07T15:49:30.911Z",
+    "path": "/v0/quote"
+  }
+}

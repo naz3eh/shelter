@@ -1,117 +1,151 @@
 /**
  * NEAR Intents 1Click client, confidential balance, and status tracking.
  *
- * DRAFT INTERFACE: the backend owner finalizes these types and signatures
- * against the live 1Click API. Everything here is a stub.
+ * Implemented: token list, validated and signature-checked quotes for both
+ * Shelter legs, status reads and polling (G4.1); NEP-413 User-Session
+ * sign-in, confidential balances, deposit notification and checked
+ * signed-intent withdrawals on intents.far (G4.2), and one-call burner
+ * funding (`fundBurner`, G4.3). Wire details: docs/backend/ONECLICK.md.
+ * Crash-safe multi-step flows live in @shelter/burner.
  */
 
-export type Confidentiality = "none" | "advanced";
+import { createIntentsClient as create, type IntentsClient } from "./client.js";
+import type { IntentSummary, WithdrawResult } from "./execution.js";
+import type { Nep413Signer } from "./nep413.js";
+import { privateWithdrawRequest } from "./legs.js";
+import type { AssetAmount, Quote, QuoteRequest, StatusResult } from "./types.js";
 
-export interface AssetAmount {
-  /** 1Click asset id, e.g. "nep141:base-0x....omft.near" */
-  assetId: string;
-  /** Amount in the asset's smallest unit, as a decimal string. */
-  amount: string;
-}
+export { createIntentsClient } from "./client.js";
+export type { CallOptions, IntentsClient, IntentsClientOptions, WaitOptions } from "./client.js";
+export {
+  checkGeneratedIntent,
+  CONFIDENTIAL_INTENTS_CONTRACT,
+  CONFIDENTIAL_INTENTS_SALT,
+  CONFIDENTIAL_TREASURY,
+  confidentialTokenId,
+  executeSignedIntent,
+  getBalances,
+  prepareSignedIntent,
+  submitDeposit,
+  submitSignedIntent,
+} from "./execution.js";
+export type { Balance, ExecutionDeps, IntentExpectation, IntentSummary, PreparedIntent, SubmittedIntent, WithdrawResult } from "./execution.js";
+export { createNearView, DEFAULT_NEAR_RPC_URL, INTENTS_CONTRACT } from "./near-rpc.js";
+export type { NearView, NearViewOptions } from "./near-rpc.js";
+export {
+  formatEd25519Signature,
+  nep413Bytes,
+  nep413Hash,
+  parseEd25519PublicKey,
+  signNep413Checked,
+  verifyNep413,
+} from "./nep413.js";
+export type { Nep413Payload, Nep413Signature, Nep413Signer } from "./nep413.js";
+export { decodeVersionedNonce, encodeVersionedNonce, timestampedRandomBytes } from "./nonce.js";
+export type { DecodedNonce } from "./nonce.js";
+export { assertKeyRegistered, loginPayload, signIn, toSignedData } from "./session.js";
+export type { SignedNep413, SignInOptions, UserSession } from "./session.js";
+export { IntentsError, isIntentsError } from "./errors.js";
+export type { IntentsErrorKind } from "./errors.js";
+export { assertPositiveBaseUnits, formatBaseUnits, parseBaseUnits, toBaseUnits } from "./amount.js";
+export { isEvmAddress, isIntentsAccountId, SUPPORTED_EVM_CHAINS } from "./accounts.js";
+export { privateDepositRequest, privateWithdrawRequest } from "./legs.js";
+export type { PrivateDepositLeg, PrivateWithdrawLeg } from "./legs.js";
+export { assertFundable, DEFAULT_DEADLINE_MS, DEFAULT_SLIPPAGE_BPS } from "./quote.js";
+export { ONE_CLICK_MANAGER_PUBLIC_KEY, quoteDigest, verifyQuoteSignature } from "./signature.js";
+export { isTerminalStatus } from "./status.js";
+export { createFetchTransport, DEFAULT_BASE_URL } from "./transport.js";
+export type { FetchLike, FetchTransportOptions, Transport, TransportRequest } from "./transport.js";
+export type {
+  AssetAmount,
+  ChainTx,
+  Confidentiality,
+  DepositType,
+  IntentStatus,
+  Quote,
+  QuoteProvenance,
+  QuoteRequest,
+  RecipientType,
+  RefundType,
+  StatusResult,
+  SwapType,
+  TokenInfo,
+} from "./types.js";
+export type { WireQuoteRequest, WireQuoteResponse, WireStatusResponse } from "./wire.js";
 
-export interface QuoteRequest {
-  from: AssetAmount;
-  toAssetId: string;
-  /** Where refunds go if the swap fails. */
-  refundTo: string;
-  /** Destination account or address. */
-  recipient: string;
-  slippageBps?: number;
-  confidentiality?: Confidentiality;
-  /** When true, ask 1Click for a quote without reserving a deposit address. */
-  dry?: boolean;
-}
-
-export interface Quote {
-  quoteId: string;
-  depositAddress?: string;
-  amountIn: string;
-  amountOut: string;
-  /** ISO-8601 time after which the deposit address is no longer valid. */
-  deadline: string;
-  confidentiality: Confidentiality;
-}
-
-export type IntentStatus =
-  | "PENDING_DEPOSIT"
-  | "KNOWN_DEPOSIT_TX"
-  | "PROCESSING"
-  | "SUCCESS"
-  | "INCOMPLETE_DEPOSIT"
-  | "REFUNDED"
-  | "FAILED";
-
-export interface StatusResult {
-  depositAddress: string;
-  status: IntentStatus;
-  txHashes: string[];
-  updatedAt: string;
-}
-
+/** Deposit leg: the verified execution quote and the hash of the on-chain transfer into its depositAddress. */
 export interface DepositRequest {
   quote: Quote;
-  /** Hash of the on-chain transfer into quote.depositAddress. */
   txHash: string;
 }
 
+/** Withdrawal leg: a verified CONFIDENTIAL_INTENTS execution quote and the balance owner's wallet. */
 export interface WithdrawRequest {
-  from: AssetAmount;
-  /** Destination address on the target chain (typically a burner). */
-  to: string;
-  chain: string;
-  confidentiality?: Confidentiality;
+  quote: Quote;
+  signer: Nep413Signer;
+  /** Sees exactly what will be signed; must resolve true. */
+  approve?: (s: IntentSummary) => Promise<boolean> | boolean;
+  signal?: AbortSignal;
 }
 
+/** One confidential withdrawal into a burner (or any fresh address). */
 export interface FundBurnerRequest {
-  /** One-time burner address from @shelter/burner. */
+  /** The fresh EVM address on Base to fund. */
   burnerAddress: string;
-  chain: string;
+  /** Exactly what the address must receive (EXACT_OUTPUT). */
   amount: AssetAmount;
+  /** Balance asset that pays, when different (for example USDC paying for ETH gas). */
+  payWithAssetId?: string;
+  /** The balance owner's wallet; it signs the withdrawal. */
+  signer: Nep413Signer;
+  approve?: (s: IntentSummary) => Promise<boolean> | boolean;
+  /** Client to use; it must carry the partner key. Default: the module's default client (no key). */
+  client?: IntentsClient;
+  slippageBps?: number;
+  signal?: AbortSignal;
 }
 
-export interface IntentsClientOptions {
-  /** 1Click JWT (ONECLICK_JWT). */
-  jwt?: string;
-  baseUrl?: string;
+let defaultClient: IntentsClient | undefined;
+const client = () => (defaultClient ??= create());
+
+/** Quote through a default client (no partner JWT, dry and "advanced" unless the request says otherwise). */
+export function getQuote(req: QuoteRequest): Promise<Quote> {
+  return client().getQuote(req);
 }
 
-export interface IntentsClient {
-  getQuote(req: QuoteRequest): Promise<Quote>;
-  deposit(req: DepositRequest): Promise<StatusResult>;
-  withdraw(req: WithdrawRequest): Promise<StatusResult>;
-  fundBurner(req: FundBurnerRequest): Promise<StatusResult>;
-  status(depositAddress: string): Promise<StatusResult>;
+export function status(depositAddress: string): Promise<StatusResult> {
+  return client().status(depositAddress);
 }
 
-const notImplemented = (): never => {
-  throw new Error("not implemented");
-};
-
-export function getQuote(_req: QuoteRequest): Promise<Quote> {
-  return notImplemented();
+/** Deposit leg through a default client: notifies 1Click and returns the current status. */
+export function deposit(req: DepositRequest): Promise<StatusResult> {
+  return client().submitDeposit(req.quote, req.txHash);
 }
 
-export function deposit(_req: DepositRequest): Promise<StatusResult> {
-  return notImplemented();
+/** Withdrawal leg through a default client (no partner JWT). */
+export function withdraw(req: WithdrawRequest): Promise<WithdrawResult> {
+  return client().executeSignedIntent(req.quote, req.signer, { approve: req.approve, signal: req.signal });
 }
 
-export function withdraw(_req: WithdrawRequest): Promise<StatusResult> {
-  return notImplemented();
-}
-
-export function fundBurner(_req: FundBurnerRequest): Promise<StatusResult> {
-  return notImplemented();
-}
-
-export function status(_depositAddress: string): Promise<StatusResult> {
-  return notImplemented();
-}
-
-export function createIntentsClient(_opts: IntentsClientOptions = {}): IntentsClient {
-  return { getQuote, deposit, withdraw, fundBurner, status };
+/**
+ * Funds a burner from the confidential balance in one call: an execution
+ * quote, the checked and signed intent, the submit, and the first status.
+ * Nothing is persisted between the steps, so a crash after signing cannot be
+ * resumed; `@shelter/burner`'s engine runs the same legs crash-safely and is
+ * what Shelter's flows use.
+ */
+export async function fundBurner(req: FundBurnerRequest): Promise<WithdrawResult> {
+  const c = req.client ?? client();
+  const quote = await c.getQuote(
+    privateWithdrawRequest({
+      asset: req.amount,
+      payWithAssetId: req.payWithAssetId,
+      owner: req.signer.accountId,
+      destination: req.burnerAddress,
+      slippageBps: req.slippageBps,
+      dry: false,
+    }),
+    { signal: req.signal },
+  );
+  return c.executeSignedIntent(quote, req.signer, { approve: req.approve, signal: req.signal });
 }
