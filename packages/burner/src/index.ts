@@ -26,6 +26,7 @@ export type {
   BurnerAction,
   BurnerJob,
   Erc20TransferAction,
+  FundAction,
   HoldAction,
   FundingAttempt,
   FundingLeg,
