@@ -82,8 +82,13 @@ export interface Quote {
   /** USD values as 1Click reports them. For display only. */
   amountInUsd: string;
   amountOutUsd: string;
-  /** Deposit address expiry. Absent on dry quotes. */
+  /**
+   * When the full deposit must have arrived: the earlier of the requested
+   * deadline and the deposit address expiry (1Click refunds anything still
+   * incomplete after the requested one). Absent on dry quotes.
+   */
   deadline?: string;
+  /** The deposit address expiry as 1Click sent it (`quote.timeWhenInactive`). */
   timeWhenInactive?: string;
   /** Estimated seconds from confirmed deposit to completion. */
   timeEstimateSec: number;

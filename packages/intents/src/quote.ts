@@ -107,6 +107,17 @@ export function toWireQuoteRequest(r: Required<QuoteRequest>): WireQuoteRequest 
   };
 }
 
+/**
+ * 1Click refunds a deposit that has not fully arrived by the *requested*
+ * deadline (status REFUNDED, reason QUOTE_EXPIRED), even though `quote.deadline`
+ * on the wire is the deposit address's much later expiry (seen live 2026-11-12:
+ * a 30-minute request deadline, a 3-day `quote.deadline`, refunded at the
+ * 30-minute mark). The time that matters is the earlier of the two.
+ */
+function effectiveDeadline(requested: string, addressExpiry: string): string {
+  return Date.parse(requested) <= Date.parse(addressExpiry) ? new Date(Date.parse(requested)).toISOString() : addressExpiry;
+}
+
 export interface MapQuoteOptions {
   verifySignature: boolean;
   signerPublicKey: string;
@@ -148,7 +159,7 @@ export function mapQuoteResponse(raw: unknown, request: Required<QuoteRequest>, 
     minAmountOut: q.minAmountOut,
     amountInUsd: q.amountInUsd,
     amountOutUsd: q.amountOutUsd,
-    deadline: q.deadline,
+    deadline: request.dry ? q.deadline : effectiveDeadline(request.deadline, q.deadline!),
     timeWhenInactive: q.timeWhenInactive,
     timeEstimateSec: q.timeEstimate,
     withdrawFee: q.withdrawFee,

@@ -49,6 +49,40 @@ describe("status", () => {
     },
   );
 
+  it("reads a pending deposit whose unknown amounts are null (live 2026-11-12)", async () => {
+    // swapDetails exactly as /v0/status returned it for a real deposit quote before the transfer.
+    const pending = {
+      depositedAmount: null,
+      depositedAmountUsd: null,
+      depositedAmountFormatted: null,
+      amountIn: null,
+      amountInFormatted: null,
+      amountInUsd: null,
+      amountOut: null,
+      amountOutFormatted: null,
+      amountOutUsd: null,
+      slippage: null,
+      refundedAmount: "0",
+      refundedAmountFormatted: "0",
+      refundedAmountUsd: "0",
+      refundReason: null,
+      refundFee: "0",
+      withdrawFee: "0",
+    };
+    const { client } = testClient(() => json(statusBody("PENDING_DEPOSIT", pending)));
+    const r = await client.status(DEPOSIT_ADDRESS);
+    expect(r.status).toBe("PENDING_DEPOSIT");
+    expect(r.amountIn).toBeUndefined();
+    expect(r.depositedAmount).toBeUndefined();
+    expect(r.refundReason).toBeUndefined();
+    expect(r.refundedAmount).toBe("0");
+  });
+
+  it("still rejects a malformed amount that is not null", async () => {
+    const { client } = testClient(() => json(statusBody("SUCCESS", { amountIn: "1.5" })));
+    await expect(client.status(DEPOSIT_ADDRESS)).rejects.toMatchObject({ kind: "malformed_response" });
+  });
+
   it("surfaces a new state as UNKNOWN, never as success", async () => {
     const { client } = testClient(() => json(statusBody("SETTLING_SOMEWHERE_NEW")));
     const r = await client.status(DEPOSIT_ADDRESS);
