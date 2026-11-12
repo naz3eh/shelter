@@ -8,6 +8,12 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 24 is the oldest supported line (engines >=24, needed for node:sqlite);
+        # 26 matches current development machines.
+        node-version: [24, 26]
     steps:
       - uses: actions/checkout@v4
 
@@ -15,7 +21,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ matrix.node-version }}
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
