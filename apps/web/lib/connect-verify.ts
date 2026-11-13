@@ -53,6 +53,8 @@ export interface VerifyCheck {
   detail?: string;
   /** Basescan transaction link when the check is about a mined transaction. */
   link?: string;
+  /** Raw tx hash for the copyable-hash control. */
+  hash?: string;
 }
 
 const check = (id: string, label: string, pass: boolean, extra?: Partial<VerifyCheck>): VerifyCheck => ({
@@ -151,7 +153,7 @@ async function txChecks(
   expect: { to?: string; value?: bigint; data?: string; erc20?: { token: `0x${string}`; to: string; amount: bigint } },
 ): Promise<VerifyCheck[]> {
   const out: VerifyCheck[] = [];
-  const link = { link: BASESCAN_TX(tx.hash) };
+  const link = { link: BASESCAN_TX(tx.hash), hash: tx.hash };
   out.push(check(`${id}-hash`, `${label}: hash matches signed bytes`, keccak256(tx.raw) === tx.hash, link));
   let sender: string | undefined;
   try {

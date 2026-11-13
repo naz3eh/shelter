@@ -15,6 +15,8 @@ import type { ConnectAccountView } from "@/lib/connect-source";
 import { verifySession, type VerifyCheck } from "@/lib/connect-verify";
 import { VerifiedPanel } from "@/components/verified-panel";
 import { cn } from "@/lib/utils";
+import { BASESCAN_TX } from "@/lib/connect-format";
+import { CopyableHash } from "./copyable-hash";
 
 function CheckRow({ check }: { check: VerifyCheck }) {
   return (
@@ -33,7 +35,14 @@ function CheckRow({ check }: { check: VerifyCheck }) {
       <span className="min-w-0 flex-1">
         <span className="text-foreground">{check.label}</span>
         {check.detail ? <span className="text-muted-foreground"> ({check.detail})</span> : null}
-        {check.link ? (
+        {check.hash ? (
+          <CopyableHash
+            value={check.hash}
+            href={check.link ?? BASESCAN_TX(check.hash)}
+            label="Copy transaction hash"
+            className="ml-1.5"
+          />
+        ) : check.link ? (
           <a
             href={check.link}
             target="_blank"

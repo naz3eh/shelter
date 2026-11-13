@@ -11,6 +11,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { ArrowDownToLine, Ban, Coins, Send, Undo2 } from "lucide-react";
 import type { ConnectAccountView } from "@/lib/connect-source";
 import { BURNER_ASSETS } from "@shelter/burner";
+import { CopyableHash } from "./copyable-hash";
 import { BASESCAN_TX, formatToken, shortHash } from "@/lib/connect-format";
 import { cn } from "@/lib/utils";
 
@@ -23,8 +24,8 @@ interface TimelineEvent {
   detail?: string;
   status?: string;
   outcome?: string;
-  link?: string;
-  linkLabel?: string;
+  /** Raw tx hash; rendered shortened with copy + Basescan link. */
+  hash?: string;
 }
 
 const TONE_ICON = {
@@ -85,8 +86,7 @@ function buildEvents(view: ConnectAccountView): TimelineEvent[] {
       tone: r.decision === "blocked" ? "blocked" : "use",
       title: r.summary,
       detail: r.decision === "blocked" ? "blocked by the linkage check" : r.decision,
-      link: r.tx?.hash ? BASESCAN_TX(r.tx.hash) : undefined,
-      linkLabel: r.tx ? shortHash(r.tx.hash) : undefined,
+      hash: r.tx?.hash,
     });
   }
 
@@ -98,8 +98,7 @@ function buildEvents(view: ConnectAccountView): TimelineEvent[] {
       detail: item.decision === "deposit" ? "1Click deposit into the confidential balance" : item.note,
       status: item.status,
       outcome: item.outcome,
-      link: item.tx ? BASESCAN_TX(item.tx.hash) : undefined,
-      linkLabel: item.tx ? shortHash(item.tx.hash) : undefined,
+      hash: item.tx?.hash,
     });
   }
 
@@ -171,17 +170,14 @@ export function FundingTimeline({ view }: { view: ConnectAccountView }) {
                     minute: "2-digit",
                     second: "2-digit",
                   })}
-                  {e.link ? (
+                  {e.hash ? (
                     <>
                       {" · "}
-                      <a
-                        href={e.link}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-foreground underline underline-offset-2"
-                      >
-                        tx {e.linkLabel ?? shortHash(e.link)}
-                      </a>
+                      <CopyableHash
+                        value={e.hash}
+                        href={BASESCAN_TX(e.hash)}
+                        label="Copy transaction hash"
+                      />
                     </>
                   ) : null}
                 </p>

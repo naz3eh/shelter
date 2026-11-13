@@ -17,6 +17,7 @@ import {
   type ConnectSource,
 } from "@/lib/connect-source";
 import { DappCard } from "./dapp-card";
+import { CopyableHash } from "./copyable-hash";
 import { BASESCAN_TX, formatToken } from "@/lib/connect-format";
 import { RequestRow } from "./request-row";
 import { RequestSheet } from "./request-sheet";
@@ -159,14 +160,11 @@ function CloseSheet({
                   </span>
                   <span>{item.decision === "deposit" ? "deposited to the confidential balance" : item.note}</span>
                   {item.tx ? (
-                    <a
+                    <CopyableHash
+                      value={item.tx.hash}
                       href={BASESCAN_TX(item.tx.hash)}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="font-mono text-foreground underline underline-offset-2"
-                    >
-                      tx {item.tx.hash.slice(0, 10)}…{item.tx.hash.slice(-6)}
-                    </a>
+                      label="Copy transaction hash"
+                    />
                   ) : null}
                 </li>
               );

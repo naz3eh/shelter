@@ -7,11 +7,12 @@
  */
 
 import { useMemo } from "react";
-import { AlertTriangle, CheckCircle2, ExternalLink, ShieldX } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ShieldX } from "lucide-react";
+import { CopyableHash } from "./copyable-hash";
 import { parseRequest, type Finding, type RequestRecord } from "@shelter/connect";
 import { BottomSheet } from "@/components/motion/bottom-sheet";
 import { decodeDappRequest } from "@/lib/request-decode";
-import { BASESCAN_TX, formatToken, shortenAddresses } from "@/lib/connect-format";
+import { BASESCAN_ADDRESS, BASESCAN_TX, formatToken, shortenAddresses } from "@/lib/connect-format";
 import { cn } from "@/lib/utils";
 import type { ConnectAccountView } from "@/lib/connect-source";
 
@@ -131,15 +132,14 @@ export function RequestSheet({ view, request, open, onOpenChange }: RequestSheet
             <CheckCircle2 className="h-4 w-4" aria-hidden />
             {decision.text}
             {request.tx ? (
-              <a
-                href={BASESCAN_TX(request.tx.hash)}
-                target="_blank"
-                rel="noreferrer"
-                className="ml-auto inline-flex items-center gap-1 font-mono text-xs text-emerald-300 underline underline-offset-2"
-              >
-                {request.tx.hash.slice(0, 10)}…{request.tx.hash.slice(-6)}
-                <ExternalLink className="h-3 w-3" aria-hidden />
-              </a>
+              <span className="ml-auto inline-flex items-center gap-2 font-mono text-xs text-emerald-300">
+                <CopyableHash
+                  value={request.tx.hash}
+                  href={BASESCAN_TX(request.tx.hash)}
+                  label="Copy transaction hash"
+                  className="text-emerald-300"
+                />
+              </span>
             ) : null}
           </div>
         ) : null}
@@ -201,16 +201,17 @@ export function RequestSheet({ view, request, open, onOpenChange }: RequestSheet
         {request.tx ? (
           <p className="text-xs text-muted-foreground">
             Signed by the dapp address{" "}
-            <code className="font-mono">{account.address.address.slice(0, 6)}…{account.address.address.slice(-4)}</code>{" "}
+            <CopyableHash
+              value={account.address.address}
+              href={BASESCAN_ADDRESS(account.address.address)}
+              label="Copy dapp address"
+            />{" "}
             and mined on Base.{" "}
-            <a
+            <CopyableHash
+              value={request.tx.hash}
               href={BASESCAN_TX(request.tx.hash)}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1 text-foreground underline underline-offset-2"
-            >
-              View on Basescan <ExternalLink className="h-3 w-3" aria-hidden />
-            </a>
+              label="Copy transaction hash"
+            />
           </p>
         ) : null}
 
