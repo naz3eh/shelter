@@ -10,7 +10,8 @@ Commands:
   verify-attestation     check the NEAR AI TEE attestation
   near                   confidential balance owner: keys, Meteor sign-in, dry confidential quotes
   vault                  local seed vault and address book: status, create, import
-  burner                 one action from a one-time address: preview, new, run, list, show, cancel`;
+  burner                 one action from a one-time address: preview, new, run, list, show, cancel
+  connect                use the confidential balance in any dapp over WalletConnect, unlinked`;
 
 switch (cmd) {
   case "scan":
@@ -33,6 +34,9 @@ switch (cmd) {
     break;
   case "burner":
     await import("./burner.js");
+    break;
+  case "connect":
+    await import("./connect.js");
     break;
   default:
     console.log(usage);

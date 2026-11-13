@@ -14,6 +14,7 @@
     "near": "tsx src/index.ts near",
     "vault": "tsx src/index.ts vault",
     "burner": "tsx src/index.ts burner",
+    "connect": "tsx src/index.ts connect",
     "scan": "tsx src/index.ts scan",
     "explain": "tsx src/index.ts explain"
   },
@@ -22,6 +23,7 @@
     "@scure/base": "^2.4.0",
     "@shelter/attest": "workspace:*",
     "@shelter/burner": "workspace:*",
+    "@shelter/connect": "workspace:*",
     "@shelter/core": "workspace:*",
     "@shelter/intents": "workspace:*",
     "@shelter/keys": "workspace:*",

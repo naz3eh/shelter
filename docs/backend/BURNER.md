@@ -26,6 +26,13 @@ A job whose action is `hold` funds a fresh address and keeps it: `allocate` (pur
 It never acts, sweeps or retires; the address waits, with gas for one later transfer, for the user to use as their new wallet.
 This is the spec's private move step 4: the confidential balance pays out to fresh addresses, each with gas.
 
+## Top-ups for addresses the user keeps
+
+A job whose action is `fund` tops up an address that is already in the address book and still active, such as a Connect dapp address: `allocate` checks the record and the seed instead of deriving a new address, then `fund_gas` and `fund_asset` run only for what is asked, and the job ends.
+It never acts, sweeps or retires the address, and cancelling it leaves the address active.
+When the asset is ETH, the gas rides in the same withdrawal.
+Its crash test kills it at every outside call, before and after, and checks the address receives exactly the amount and the gas once.
+
 ## Scheduling and the planner hand-off
 
 A job can carry `notBefore`; `run` refuses to start it earlier (`pending`), and the check applies only before anything is allocated, so a started job always finishes.

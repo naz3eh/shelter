@@ -3,7 +3,10 @@
  * network, keys or funds, verifying every signature in it offline.
  *
  *   demo --dry-run [--recording PATH]
- *   demo record --job bj_... [--deposit 0x...]... [--out PATH] --account NAME.near
+ *   demo record --account NAME.near [--job bj_...]... [--connect ca_...]... [--deposit 0x...]... [--out PATH]
+ *
+ * `--connect` adds a Shelter Connect session with its funding jobs, and from
+ * ~/.shelter/linked.json only the identities its blocked requests named.
  *
  * `record` assembles a recording from the local job database
  * (~/.shelter/burner.db) and the deposits `near deposit` saved
@@ -16,7 +19,8 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createSqliteJobStore } from "@shelter/burner/sqlite";
-import { buildRecording, parseRecording, replay, type DepositRecord } from "./demo/recording.js";
+import { createSqliteAccountStore } from "@shelter/connect/sqlite";
+import { buildRecording, namedByBlocks, parseRecording, replay, type ConnectRecording, type DepositRecord } from "./demo/recording.js";
 import { flag, loadEnv } from "./env.js";
 import { shelterHome } from "./prompt.js";
 
@@ -31,9 +35,25 @@ async function main() {
   if (args[0] === "record") {
     const account = flag(args, "account") ?? process.env.SHELTER_NEAR_ACCOUNT;
     const jobIds = all("job");
-    if (!account || !jobIds.length) {
-      console.error("usage: demo record --account NAME.near --job bj_... [--job ...] [--deposit 0x...]... [--out PATH]");
+    const connectIds = all("connect");
+    if (!account || (!jobIds.length && !connectIds.length)) {
+      console.error("usage: demo record --account NAME.near [--job bj_...]... [--connect ca_...]... [--deposit 0x...]... [--out PATH]");
       process.exit(1);
+    }
+    const connect: ConnectRecording[] = [];
+    if (connectIds.length) {
+      const accounts = createSqliteAccountStore(join(shelterHome(), "connect.db"));
+      const linkedFile = join(shelterHome(), "linked.json");
+      const raw = existsSync(linkedFile) ? (JSON.parse(readFileSync(linkedFile, "utf8")) as { evm?: { address: string; label: string }[]; near?: string[] }) : {};
+      const linked = [...(raw.evm ?? []).map((e) => ({ id: e.address, label: e.label })), ...(raw.near ?? []).map((n) => ({ id: n, label: "a linked NEAR account" }))];
+      for (const id of connectIds) {
+        const s = await accounts.get(id);
+        if (!s) throw new Error(`no Connect account ${id} in ${shelterHome()}`);
+        if (s.account.owner !== account) throw new Error(`Connect account ${id} belongs to ${s.account.owner}`);
+        connect.push({ account: s.account, linked: namedByBlocks(s.account, linked) });
+        for (const f of s.account.fundings) if (!jobIds.includes(f.jobId)) jobIds.push(f.jobId);
+      }
+      accounts.close?.();
     }
     const store = createSqliteJobStore(join(shelterHome(), "burner.db"));
     const jobs = [];
@@ -50,9 +70,10 @@ async function main() {
       return JSON.parse(readFileSync(f, "utf8")) as DepositRecord;
     });
     const out = flag(args, "out") ?? DEFAULT_RECORDING;
-    writeFileSync(out, `${JSON.stringify(buildRecording(account, deposits, jobs), null, 2)}\n`);
-    console.log(`Wrote ${out}: ${deposits.length} deposit(s), ${jobs.length} burner job(s).`);
-    console.log("It holds no secret, but it links your NEAR account, the burner and the payee. Commit it only if that is fine for this run.");
+    writeFileSync(out, `${JSON.stringify(buildRecording(account, deposits, jobs, new Date(), connect), null, 2)}\n`);
+    console.log(`Wrote ${out}: ${deposits.length} deposit(s), ${jobs.length} burner job(s), ${connect.length} Connect session(s).`);
+    console.log("It holds no secret, but it links your NEAR account to every address in it (burners, payees, dapp addresses, and any linked wallet a block named).");
+    console.log("Commit it only if that is fine for this run.");
     return;
   }
 

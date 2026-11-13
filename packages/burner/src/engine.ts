@@ -46,6 +46,7 @@ import {
   JOB_FORMAT_VERSION,
   type BurnerAction,
   type BurnerJob,
+  type FundAction,
   type FundingLeg,
   type JobStep,
   type JobStore,
@@ -179,8 +180,28 @@ export function createBurnerEngine(deps: BurnerEngineDeps): BurnerEngine {
 
   // ---------- validation ----------
 
+  async function validateFund(action: FundAction): Promise<FundAction> {
+    for (const k of [action.asset, action.payWith]) {
+      if (!BURNER_ASSETS[k as keyof typeof BURNER_ASSETS]) throw new BurnerError("validation", `unsupported asset ${String(k)}`);
+    }
+    const units = /^(0|[1-9][0-9]*)$/;
+    if (typeof action.amount !== "string" || !units.test(action.amount)) throw new BurnerError("validation", "amount must be base units");
+    if (typeof action.gasWei !== "string" || !units.test(action.gasWei)) throw new BurnerError("validation", "gasWei must be wei");
+    if (action.amount === "0" && action.gasWei === "0") throw new BurnerError("validation", "nothing to fund");
+    const t = action.target;
+    if (!t || !Number.isInteger(t.index) || typeof t.address !== "string" || !isAddress(t.address, { strict: false })) {
+      throw new BurnerError("validation", "fund target must be an address book index and address");
+    }
+    const address = getAddress(t.address);
+    const rec = await deps.book.get(address);
+    if (!rec || rec.index !== t.index) throw new BurnerError("validation", `${address} is not index ${t.index} in the address book`);
+    if (rec.status !== "active") throw new BurnerError("validation", `${address} is ${rec.status}`);
+    return { kind: "fund", target: { index: t.index, address }, asset: action.asset, amount: action.amount, gasWei: action.gasWei, payWith: action.payWith };
+  }
+
   async function validateAction(action: BurnerAction): Promise<BurnerAction> {
-    if (action?.kind !== "erc20_transfer" && action?.kind !== "hold") throw new BurnerError("validation", "action must be erc20_transfer or hold");
+    if (action?.kind === "fund") return validateFund(action);
+    if (action?.kind !== "erc20_transfer" && action?.kind !== "hold") throw new BurnerError("validation", "action must be erc20_transfer, hold or fund");
     const asset = BURNER_ASSETS[action.asset as keyof typeof BURNER_ASSETS];
     if (!asset?.token) throw new BurnerError("validation", `unsupported asset ${String(action.asset)}`);
     if (typeof action.amount !== "string" || !/^[1-9][0-9]*$/.test(action.amount)) {
@@ -259,8 +280,32 @@ export function createBurnerEngine(deps: BurnerEngineDeps): BurnerEngine {
 
   // ---------- steps ----------
 
+  /** Legs a fund action needs: gas on its own unless the asset is ETH, where both go in one withdrawal. */
+  const fundPlan = (a: FundAction) => {
+    const gas = BigInt(a.gasWei);
+    const amount = BigInt(a.amount) + (a.asset === "eth" ? gas : 0n);
+    return { gas: a.asset === "eth" ? 0n : gas, amount };
+  };
+
+  /** Where a fund job goes after a finished leg. */
+  const fundNext = (a: FundAction, after: "allocate" | "fund_gas"): JobStep => {
+    const p = fundPlan(a);
+    if (after === "allocate" && p.gas > 0n) return "fund_gas";
+    return p.amount > 0n ? "fund_asset" : "done";
+  };
+
   async function stepAllocate(ctx: Ctx) {
     const { job } = ctx;
+    if (job.action.kind === "fund") {
+      const t = job.action.target;
+      const rec = await deps.book.get(t.address);
+      if (!rec || rec.index !== t.index || rec.status !== "active") attention(`fund target ${t.address} is no longer an active address book entry`);
+      if (deps.vault.address(t.index) !== t.address) attention(`address book record ${t.index} does not match the seed`);
+      job.burner = { index: t.index, address: t.address };
+      const next = fundNext(job.action, "allocate");
+      if (next === "done") job.status = "done";
+      return goto(ctx, next, `topping up ${t.address} (index ${t.index})`);
+    }
     if (!job.burner) {
       const label = `burner-job:${job.id}`;
       // A crash between allocating and saving the job leaves the record; find it by label.
@@ -287,6 +332,11 @@ export function createBurnerEngine(deps: BurnerEngineDeps): BurnerEngine {
     const { job } = ctx;
     const burner = job.burner!.address;
     let leg = job.gas.at(-1);
+    if (!leg && job.action.kind === "fund") {
+      leg = { asset: "eth", payWith: job.action.payWith, amount: fundPlan(job.action).gas.toString(), attempts: [] };
+      job.gas.push(leg);
+      await save(ctx);
+    }
     if (!leg) {
       const b = await gasBudget(job.action, burner);
       leg = { asset: "eth", payWith: job.action.asset, amount: b.wei.toString(), attempts: [] };
@@ -295,16 +345,29 @@ export function createBurnerEngine(deps: BurnerEngineDeps): BurnerEngine {
       await save(ctx);
     }
     await fundLeg(ctx, leg, "gas");
+    if (job.action.kind === "fund") {
+      const next = fundNext(job.action, "fund_gas");
+      if (next === "done") job.status = "done";
+      return goto(ctx, next, next === "done" ? `gas top-up of ${job.burner!.address} delivered` : undefined);
+    }
     await goto(ctx, job.asset?.confirmedBalance && job.action.kind !== "hold" ? "act" : "fund_asset");
   }
 
   async function stepFundAsset(ctx: Ctx) {
     const { job } = ctx;
     if (!job.asset) {
-      job.asset = { asset: job.action.asset, amount: job.action.amount, attempts: [] };
+      job.asset =
+        job.action.kind === "fund"
+          ? { asset: job.action.asset, payWith: job.action.payWith, amount: fundPlan(job.action).amount.toString(), attempts: [] }
+          : { asset: job.action.asset, amount: job.action.amount, attempts: [] };
       await save(ctx);
     }
     await fundLeg(ctx, job.asset, "asset");
+    if (job.action.kind === "fund") {
+      job.status = "done";
+      await goto(ctx, "done", `${job.burner!.address} topped up`);
+      return;
+    }
     if (job.action.kind === "hold") {
       // A payout address is kept for later use: no action, no sweep, not retired.
       job.status = "done";
@@ -734,7 +797,8 @@ export function createBurnerEngine(deps: BurnerEngineDeps): BurnerEngine {
     },
 
     async preview(action, opts = {}) {
-      const valid = await validateAction(action);
+      if (action?.kind === "fund") throw new BurnerError("validation", "preview covers erc20_transfer and hold actions");
+      const valid = (await validateAction(action)) as Exclude<BurnerAction, FundAction>;
       const asset = BURNER_ASSETS[valid.asset];
       const throwaway = getAddress(`0x${hex(20)}`);
       const gas = await gasBudget(valid, throwaway);
@@ -816,7 +880,8 @@ export function createBurnerEngine(deps: BurnerEngineDeps): BurnerEngine {
         if (legs.some((l) => l.attempts.some((a) => a.prepared))) {
           throw new BurnerError("validation", "a withdrawal was already signed; run the job to finish or sweep instead of cancelling");
         }
-        if (job.burner) await deps.book.retire(job.burner.address);
+        // A fund job tops up an address the caller keeps; only a job's own burner is retired.
+        if (job.burner && job.action.kind !== "fund") await deps.book.retire(job.burner.address);
         job.status = "cancelled";
         note(ctx, "cancelled");
         await save(ctx);
@@ -833,6 +898,12 @@ export function createBurnerEngine(deps: BurnerEngineDeps): BurnerEngine {
 
 function describe(a: BurnerAction): string {
   const asset = BURNER_ASSETS[a.asset];
+  if (a.kind === "fund") {
+    const parts = [];
+    if (a.amount !== "0") parts.push(`${formatBaseUnits(a.amount, asset.decimals)} ${asset.symbol}`);
+    if (a.gasWei !== "0") parts.push(`${formatBaseUnits(a.gasWei, 18)} ETH for gas`);
+    return `top up ${a.target.address} with ${parts.join(" and ")}, paid in ${BURNER_ASSETS[a.payWith].symbol}`;
+  }
   const amount = `${formatBaseUnits(a.amount, asset.decimals)} ${asset.symbol}`;
   return a.kind === "hold" ? `fund a fresh payout address with ${amount} plus gas` : `send ${amount} to ${a.to}`;
 }

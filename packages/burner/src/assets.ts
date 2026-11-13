@@ -1,8 +1,9 @@
 /**
  * Assets a burner can be funded with, on Base (chain 8453).
  *
- * 1Click asset ids and the deposit minimum were checked live on 2026-11-08
- * (docs/backend/ONECLICK.md). The USDC contract is Circle's native USDC on
+ * 1Click asset ids and the USDC deposit minimum were checked live on
+ * 2026-11-08 and again on 2026-11-12, the ETH minimum on 2026-11-12, with dry
+ * deposit quotes (docs/backend/ONECLICK.md). The USDC contract is Circle's native USDC on
  * Base, the token behind the 1Click asset id.
  */
 
@@ -34,9 +35,10 @@ export const ETH_BASE: BurnerAsset = {
   symbol: "ETH",
   decimals: 18,
   assetId: "nep141:base.omft.near",
-  // Not measured for native ETH; a gas leftover is far below any useful
-  // sweep, so the engine never tries to sweep ETH.
-  depositMinimum: 2n ** 255n,
+  // 1e11 wei (0.0000001 ETH): smaller dry deposit quotes are refused with
+  // "try at least 100000000000". The burner engine still never sweeps its
+  // ETH (a burner's gas leftover is not worth a transfer); Connect does.
+  depositMinimum: 100_000_000_000n,
 };
 
 export const BURNER_ASSETS = { usdc: USDC_BASE, eth: ETH_BASE } as const;

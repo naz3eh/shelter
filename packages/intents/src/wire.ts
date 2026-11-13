@@ -64,6 +64,9 @@ const nonEmpty = () => z.string().check(z.minLength(1, "must not be empty"));
 const uint = () => z.string().check(z.regex(/^(0|[1-9][0-9]*)$/, "must be a base-unit integer string"));
 const isoDate = () => z.string().check(z.refine((s) => !Number.isNaN(Date.parse(s)), "must be an ISO-8601 date-time"));
 const opt = z.optional;
+/** Optional, and also `null`, which /v0/status sends for fields not known yet (seen live 2026-11-12); read as absent. */
+const maybe = <T extends z.ZodMiniType>(s: T) =>
+  z.optional(z.pipe(z.nullable(s), z.transform((v: z.output<T> | null): z.output<T> | undefined => v ?? undefined)));
 
 export const tokenSchema = z.looseObject({
   assetId: nonEmpty(),
@@ -132,15 +135,15 @@ const txDetailsSchema = z.looseObject({ hash: nonEmpty(), explorerUrl: str() });
 export const swapDetailsSchema = z.looseObject({
   intentHashes: z.array(str()),
   nearTxHashes: z.array(str()),
-  amountIn: opt(uint()),
-  amountOut: opt(uint()),
-  slippage: opt(z.number()),
+  amountIn: maybe(uint()),
+  amountOut: maybe(uint()),
+  slippage: maybe(z.number()),
   originChainTxHashes: z.array(txDetailsSchema),
   destinationChainTxHashes: z.array(txDetailsSchema),
-  refundedAmount: opt(uint()),
-  refundReason: opt(str()),
-  depositedAmount: opt(uint()),
-  withdrawFee: opt(uint()),
+  refundedAmount: maybe(uint()),
+  refundReason: maybe(str()),
+  depositedAmount: maybe(uint()),
+  withdrawFee: maybe(uint()),
 });
 
 /**

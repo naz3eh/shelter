@@ -64,7 +64,9 @@ function printJob(j: BurnerJob, events = false) {
   console.log(
     a.kind === "hold"
       ? `  action  payout: fund a fresh address with ${fmtAsset(a.asset, a.amount)} plus gas, and keep it`
-      : `  action  send ${fmtAsset(a.asset, a.amount)} to ${a.to}`,
+      : a.kind === "fund"
+        ? `  action  top up ${a.target.address} with ${fmtAsset(a.asset, a.amount)} and ${fmtEth(a.gasWei)} for gas (Connect)`
+        : `  action  send ${fmtAsset(a.asset, a.amount)} to ${a.to}`,
   );
   if (j.notBefore) console.log(`  starts  not before ${j.notBefore}`);
   console.log(`  owner   ${j.owner}`);

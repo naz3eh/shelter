@@ -209,6 +209,19 @@ describe("dry vs execution quotes", () => {
     }
   });
 
+  it("treats the requested deadline as the cutoff when the address lives longer (live 2026-11-12)", async () => {
+    // Live: a 30-minute request deadline came back with a 3-day quote.deadline, and a deposit that was
+    // still incomplete at the 30-minute mark was refunded (QUOTE_EXPIRED).
+    const threeDays = new Date(NOW.getTime() + 3 * 24 * 3600_000).toISOString();
+    const { client } = testClient(echoQuote({ deadline: threeDays, timeWhenInactive: threeDays }));
+    const q = await client.getQuote(deposit({ dry: false }));
+    expect(q.deadline).toBe(q.request.deadline);
+    expect(Date.parse(q.deadline!) - NOW.getTime()).toBe(30 * 60_000);
+    expect(q.timeWhenInactive).toBe(threeDays);
+    expect(() => assertFundable(q, NOW)).not.toThrow();
+    expect(() => assertFundable(q, new Date(NOW.getTime() + 31 * 60_000))).toThrowError(/deadline/);
+  });
+
   it("rejects an execution quote without a deposit address", async () => {
     const { client } = testClient(echoQuote({ depositAddress: undefined, deadline: undefined }));
     const e = await rejection(client.getQuote(deposit({ dry: false })));

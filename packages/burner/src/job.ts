@@ -4,6 +4,7 @@
  *
  *   allocate -> fund_gas -> fund_asset -> act -> sweep -> retire -> done   (erc20_transfer)
  *   allocate -> fund_gas -> fund_asset -> done                            (hold: a kept payout address)
+ *   allocate -> [fund_gas] -> [fund_asset] -> done                        (fund: top up a held address)
  *
  * Everything needed to resume is in the job, and every outside effect is
  * recorded before it happens in a form that is safe to repeat:
@@ -41,7 +42,25 @@ export interface HoldAction {
   /** Base units. */
   amount: string;
 }
-export type BurnerAction = Erc20TransferAction | HoldAction;
+/**
+ * Top up an address the user already holds (a Connect dapp address): the
+ * asset, gas, or both, from the confidential balance. No action, no sweep,
+ * never retired by the job. The address must be in the address book and
+ * still active; unlike a burner it may already have history.
+ */
+export interface FundAction {
+  kind: "fund";
+  target: { index: number; address: `0x${string}` };
+  /** What the address receives besides gas. */
+  asset: BurnerAssetKey;
+  /** Base units of `asset`; "0" for a gas-only top-up. */
+  amount: string;
+  /** Native ETH for gas, in wei; "0" for none. Merged into the asset leg when `asset` is ETH. */
+  gasWei: string;
+  /** Confidential balance asset that pays for every leg. */
+  payWith: BurnerAssetKey;
+}
+export type BurnerAction = Erc20TransferAction | HoldAction | FundAction;
 
 export type JobStep = "allocate" | "fund_gas" | "fund_asset" | "act" | "sweep" | "retire" | "done";
 export type JobStatus = "active" | "done" | "cancelled" | "needs_attention";
