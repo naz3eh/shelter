@@ -47,7 +47,7 @@ Run 2026-11-13 on Node 26.12.1:
 - `pnpm install --frozen-lockfile` - clean
 - `pnpm -r typecheck` - 8 projects pass
 - `pnpm build` - passes (Next production build)
-- `pnpm -r test` - 343 tests pass (core 31, intents 146, keys 50, burner 42, connect 61, attest 13), no network calls
+- `pnpm -r test` - 356 tests pass (core 31, intents 146, keys 50, burner 42, connect 74, attest 13), no network calls
 - `connect link add/list/remove` and `connect list` run end to end against a scratch `SHELTER_HOME`; WalletKit initializes in Node in about 0.3 s
 
 ## Open PRs
