@@ -8,8 +8,8 @@ Every step below runs offline with no keys, funds or accounts unless it says oth
 
 1. run `pnpm install && pnpm -r test` - see every package's tests pass with no network calls (scan engine, 1Click client, seed vault, burner engine, Shelter Connect, TEE attestation).
 2. run `pnpm --filter @shelter/cli scan --sample exposed` - see a 98.5/100 exposure score with the findings that link the sample wallets.
-3. run `pnpm --filter @shelter/connect test` - see a dapp swap through a per-dapp address, every kind of linking request refused before anything is signed, and a close killed at each of its 70 outside calls that still returns every token exactly once.
-4. run `pnpm demo -- --dry-run --recording <file>` on a recorded mainnet session - see every 1Click quote signature, every NEP-413 withdrawal signature and every Base transaction checked offline (see [Recorded mainnet runs](#recorded-mainnet-runs)).
+3. run `pnpm --filter @shelter/connect test` - see a dapp swap through a per-dapp address, every kind of linking request refused before anything is signed, and a close killed at each of its 72 outside calls that still returns every token exactly once.
+4. open the Basescan links under [Verified on mainnet](docs/backend/CONNECT.md#verified-on-mainnet-2026-11-12-funded) (needs a browser) - see a real Uniswap session on Base: the funding from the confidential balance, an approval, a permit and a swap, and the sweep of USDC and ETH back, all from one fresh address that nothing else ever used.
 5. With a free WalletConnect project id in `.env`: run `pnpm --filter @shelter/cli connect start --sandbox`, then paste any dapp's WalletConnect link - see the dapp connect to a throwaway address, get real signatures, and get "Blocked by Shelter" for a request that names a wallet you linked with `connect link add`.
 
 ## Built at NEAR HACKATHON
@@ -102,7 +102,7 @@ Every request passes a linkage check before you approve it: anything that names 
 Closing a dapp sweeps what is left back into the confidential balance and retires the address.
 Details: [CONNECT.md](docs/backend/CONNECT.md).
 
-- run `pnpm --filter @shelter/connect test` - see a swap through a fake dapp router, each kind of linking request refused before anything is signed, just-in-time gas and ETH top-ups, and a close killed at each of its 70 outside calls that still returns everything exactly once.
+- run `pnpm --filter @shelter/connect test` - see a swap through a fake dapp router, each kind of linking request refused before anything is signed, just-in-time gas and ETH top-ups, and a close killed at each of its 72 outside calls that still returns everything exactly once.
 - `WALLETCONNECT_PROJECT_ID` (a free Reown Cloud project) is needed to pair with real dapps.
 - run `connect start --sandbox` and paste any dapp's WalletConnect link (Connect, then WalletConnect, then copy the link) - see it connect to a throwaway address, get real signatures, and get refused when a request names a wallet you linked; no vault, partner key or funds needed.
 - the running wallet takes more links at its `wc link>` prompt, one per dapp, each with its own address.
@@ -121,6 +121,7 @@ Verified on Base mainnet on 2026-11-12: Uniswap funded from the confidential bal
 `demo record` assembles a recording from the local databases: deposits, burner jobs and Connect sessions (`--connect ca_...` adds the session and its funding jobs).
 `pnpm demo -- --dry-run [--recording PATH]` replays it with no network: 1Click quote signatures (and that the fields used are the signed ones), NEP-413 withdrawal signatures, every Base transaction's hash, sender and effect, every dapp message or typed-data signature, and every blocked request blocked again by the linkage check.
 A recording holds no secret, but it ties the NEAR account to every address in it; only the linked wallets a block named are included.
+This repository does not include a recording yet: `pnpm demo -- --dry-run` says so and exits.
 
 ## Seed vault and address book
 

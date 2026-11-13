@@ -229,4 +229,6 @@ What Shelter does not protect against, across all parts:
 - **Off-chain fingerprints.** IP addresses, browser fingerprints, dapp accounts, emails and anything typed into a dapp link the user without any on-chain trace.
 - **Public recordings.** A demo recording or published transaction links its NEAR account to every address in it; that run's privacy is given up by publishing it.
 - **Dust and unsupported tokens.** Amounts below 1Click's minimums and tokens 1Click does not list stay on retired addresses; they are recoverable from the seed but moving them later links that address again.
+  The sweep approval lists unlisted tokens the address received in its own transactions; airdropped tokens are not listed.
+- **The linkage check matches on forms, not intent.** It catches an identity written in the open (raw bytes, text, hex text, UTF-16), not one a dapp hides on purpose (split into pieces, base64, hashed).
 - **Availability.** If 1Click or the Intents contracts are unavailable, funds in the confidential balance cannot move until they return; Shelter holds no fallback route.

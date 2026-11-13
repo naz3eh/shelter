@@ -37,11 +37,18 @@ The identity set is everything the user wants kept apart from a dapp:
 | Request | Blocked when | Warned when |
 | --- | --- | --- |
 | Any | It comes from an origin other than the one the address is bound to, or WalletConnect Verify flags the domain as a scam or a mismatch | Verify cannot vouch for the domain |
-| `eth_sendTransaction` | The recipient is in the identity set; any identity address appears anywhere in the calldata (aligned words and packed encodings alike); a NEAR account id appears in it as UTF-8 (a bridge memo); it names another sender or chain; it creates a contract | An unlimited token approval |
-| `personal_sign` | The message names an identity (with or without 0x, any case; a NEAR sub-account names its parent); a sign-in (EIP-4361) is for a domain other than the dapp's | A sign-in names another chain |
-| `eth_signTypedData_v4` | Any value at any depth names an identity, or another signer | The domain is for another chain, or it grants an unlimited allowance |
+| `eth_sendTransaction` | The recipient is in the identity set; an identity address appears in the calldata as one contiguous run of bytes (aligned words and packed encodings alike) or written as text; a NEAR account id appears in it as UTF-8 or UTF-16 bytes (a bridge memo) or as hex text; it names another sender or chain; it creates a contract | An unlimited token approval |
+| `personal_sign` | The message names an identity (with or without 0x, any case; a NEAR sub-account names its parent; a NEAR id also as UTF-16 or hex text); a sign-in (EIP-4361) is for a domain other than the dapp's | A sign-in names another chain |
+| `eth_signTypedData_v4` | Any value at any depth names an identity (a bytes value is also read for what it encodes), or another signer | The domain is for another chain, or it grants an unlimited allowance |
 
 Blocked requests are refused before the user is asked and before anything is signed, and the dapp gets an EIP-1193 4001 error whose message says why.
+
+Matching is by substring on the forms above.
+It stops a dapp that names an identity in the open, not one that hides it on purpose: an address split into pieces at separate places in the calldata, or encoded some other way (base64, hashed, XOR-ed), is not seen (a test pins the split case).
+NEAR ids shorter than 6 characters are not matched as hex text, since their hex is short enough to turn up in an unrelated number.
+
+The origin check uses the origin WalletConnect Verify reports for each request.
+When Verify reports none, the dapp's self-reported URL stands in and the approval warns that the domain is unverified; it never falls back to the account's own origin, which would make the check pass by construction.
 `eth_sign` (a raw hash nobody can read) and `eth_signTransaction` (a transaction Connect would not send itself) are refused as unsupported.
 
 ## Crash safety
@@ -50,8 +57,8 @@ Each account is a saved record with compare-and-swap on every write; requests on
 A signed transaction is saved, with its hash, before it is broadcast.
 If the process dies between the two, `close` finds it, asks the chain, and records it as sent or as never sent.
 Sweeps follow the burner engine's rules: the quote and the signed transfer are saved before anything is sent, and a resume repeats the same bytes.
-The close crash test kills the engine at each of the 70 outside calls a close makes, before and after each one (140 runs); every run finishes with each 1Click deposit address receiving exactly one transfer and the same totals returned as a clean run.
-A deliberately broken engine (one that re-signs a saved sweep transfer after a restart) fails 27 of those runs.
+The close crash test kills the engine at each of the 72 outside calls a close makes, before and after each one (144 runs); every run finishes with each 1Click deposit address receiving exactly one transfer and the same totals returned as a clean run.
+A second test runs the same matrix against a deliberately broken engine, one that forgets a saved sweep transfer after a restart and signs a fresh one, and requires it to fail (38 of the 144 runs did on 2026-11-13), so the matrix is shown to catch the bug it exists for.
 
 ## Funding and fees
 
@@ -68,6 +75,8 @@ A budget of 0 opens a sign-in-only account: it holds nothing and is meant for si
 
 Sweeping a token costs one Base transaction; if the address is out of gas, Connect asks to top it up first.
 Amounts below 1Click's minimum for a token are left as dust, and so are tokens 1Click does not list; both stay on the retired address, whose key the seed can still recover.
+Before the user agrees to the sweep, the approval lists every unlisted token the address received in its own transactions (read from their ERC-20 `Transfer` logs) that still has a balance.
+Tokens others sent to the address (airdrops) are not in those receipts and are not listed.
 
 ## Running it
 
@@ -81,6 +90,7 @@ pnpm --filter @shelter/cli connect close ca_... --account you.near        # swee
 ```
 
 The running wallet keeps one reader on the terminal: a pasted `wc:` link pairs another dapp, and while a question is open the next line answers it, so prompts and pasting never fight over the terminal.
+A `wc:` link is never taken as an answer: pasted while a question is open, it pairs and the question stays open.
 A link can also be given on the command line (`connect start 'wc:...'`).
 
 Each request record keeps the dapp's params as sent, so `demo record --connect ca_...` can produce a recording whose replay re-checks every signature and re-runs every block offline (records made before 2026-11-12 lack them, and the replay says so).
