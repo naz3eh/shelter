@@ -10,6 +10,7 @@
 import {
   createPublicClient,
   erc20Abi,
+  getAddress,
   http,
   TransactionNotFoundError,
   TransactionReceiptNotFoundError,
@@ -38,6 +39,19 @@ export interface Receipt {
   gasUsed: bigint;
   /** L2 execution fee plus the L1 data fee, in wei. */
   feeWei: bigint;
+  /** ERC-20 `Transfer` events in the transaction's logs (ERC-721 transfers, with an indexed id, are left out). */
+  tokenTransfers?: { token: `0x${string}`; from: `0x${string}`; to: `0x${string}` }[];
+}
+
+/** keccak256("Transfer(address,address,uint256)") */
+export const ERC20_TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+
+/** The ERC-20 transfers among a receipt's logs. */
+export function tokenTransfersOf(logs: readonly { address: string; topics: readonly (Hex | null)[] }[]): NonNullable<Receipt["tokenTransfers"]> {
+  const word = (t: Hex) => getAddress(`0x${t.slice(26)}`);
+  return logs
+    .filter((l) => l.topics.length === 3 && l.topics[0] === ERC20_TRANSFER_TOPIC && l.topics[1] && l.topics[2])
+    .map((l) => ({ token: getAddress(l.address), from: word(l.topics[1]!), to: word(l.topics[2]!) }));
 }
 
 export interface ChainClient {
@@ -135,7 +149,13 @@ export function createBaseChain(opts: BaseChainOptions): ChainClient {
       try {
         const r = await client.getTransactionReceipt({ hash });
         const l1 = (r as { l1Fee?: bigint | null }).l1Fee ?? 0n;
-        return { status: r.status, blockNumber: r.blockNumber, gasUsed: r.gasUsed, feeWei: r.gasUsed * r.effectiveGasPrice + l1 };
+        return {
+          status: r.status,
+          blockNumber: r.blockNumber,
+          gasUsed: r.gasUsed,
+          feeWei: r.gasUsed * r.effectiveGasPrice + l1,
+          tokenTransfers: tokenTransfersOf(r.logs),
+        };
       } catch (e) {
         if (e instanceof TransactionReceiptNotFoundError) return null;
         throw new BurnerError("chain", `Base RPC: getTransactionReceipt failed: ${shortMessage(e)}`, { cause: e });

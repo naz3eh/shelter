@@ -6,9 +6,9 @@ import { Faults, MAIN, opened, ORIGIN, OUT, OWNER, rig, ROUTER, routerAbi, UNLIS
 
 const src: RequestSource = { origin: ORIGIN, verified: "valid" };
 const approveTx = (spender = ROUTER, amount = 2_000_000n) => ({ to: USDC, data: encodeFunctionData({ abi: erc20Abi, functionName: "approve", args: [spender, amount] }) });
-const swapTx = (recipient: `0x${string}`, amount = 2_000_000n) => ({
+const swapTx = (recipient: `0x${string}`, amount = 2_000_000n, tokenOut: `0x${string}` = OUT) => ({
   to: ROUTER,
-  data: encodeFunctionData({ abi: routerAbi, functionName: "swap", args: [USDC, amount, OUT, recipient] }),
+  data: encodeFunctionData({ abi: routerAbi, functionName: "swap", args: [USDC, amount, tokenOut, recipient] }),
 });
 const send = (r: Rig, id: string, from: `0x${string}`, tx: Record<string, unknown>, source: RequestSource = src) =>
   r.engine().handle(id, { method: "eth_sendTransaction", params: [{ from, ...tx }], rpcId: 1 }, source);
@@ -267,6 +267,22 @@ describe("close", () => {
     await rejectsWith(send(r, a.id, self, approveTx()), "busy");
   });
 
+  it("tells the user, before the sweep, which received tokens 1Click cannot take back", async () => {
+    const r = await rig();
+    const a = await opened(r);
+    const self = a.address.address;
+    await send(r, a.id, self, approveTx(ROUTER, 3_000_000n));
+    await send(r, a.id, self, swapTx(self, 1_000_000n)); // into OUT, which 1Click lists
+    await send(r, a.id, self, swapTx(self, 1_000_000n, UNLISTED)); // into a token it does not
+    const closed = await r.engine().close(a.id);
+    expect(closed.status).toBe("closed");
+    const plan = r.approvals.find((x) => x.kind === "sweep") as { items: { symbol: string }[]; unsupported: string[] };
+    expect(plan.unsupported).toEqual([`token ${UNLISTED} (3000000 in base units)`]);
+    expect(plan.items.map((x) => x.symbol)).toEqual(["USDC", "OUT", "ETH"]);
+    expect(closed.sweep!.unsupported).toEqual(plan.unsupported);
+    expect(r.world.bal(UNLISTED, self)).toBe(3_000_000n);
+  });
+
   it("leaves amounts below 1Click's minimum as dust instead of failing", async () => {
     const r = await rig();
     const a = await opened(r, "100000"); // 0.1 USDC, below the 0.15 minimum
@@ -306,7 +322,12 @@ describe("close", () => {
     expect(r.world.txs.has(stored.requests[0]!.tx!.hash)).toBe(false);
   });
 
-  it("survives a crash at every outside call during close without sending any deposit twice", async () => {
+  /**
+   * Kills the engine at every outside call a close makes, before and after
+   * each one, and checks that every run still ends closed with each 1Click
+   * deposit address paid once and the same totals returned as a clean run.
+   */
+  async function closeMatrix(onRestart?: (r: Rig, accountId: string) => Promise<void>) {
     const clean = await rig();
     const ca = await swapped(clean);
     const start = clean.world.faults.calls;
@@ -319,7 +340,7 @@ describe("close", () => {
         const a = await swapped(r);
         crashIn(r, k, phase);
         try {
-          const { value } = await untilDone(r, (e) => e.close(a.id));
+          const { value } = await untilDone(r, (e) => e.close(a.id), 10, onRestart && (() => onRestart(r, a.id)));
           expect(value.status).toBe("closed");
           expect(r.world.bal(USDC, a.address.address)).toBe(0n);
           expect(r.world.bal(OUT, a.address.address)).toBe(0n);
@@ -330,7 +351,28 @@ describe("close", () => {
         }
       }
     }
+    return { total, failures };
+  }
+
+  it("survives a crash at every outside call during close without sending any deposit twice", async () => {
+    const { total, failures } = await closeMatrix();
+expect(total).toBeGreaterThan(50);
     expect(failures).toEqual([]);
+  }, 300_000);
+
+  it("catches an engine that re-signs a saved sweep transfer after a restart", async () => {
+    // The mutant: after each crash, saved sweep transfers that have no outcome yet are forgotten,
+    // so the restarted engine signs a fresh one (as an engine that did not persist before sending would).
+    const { failures } = await closeMatrix(async (r, id) => {
+      const stored = (await r.accounts.get(id))!;
+      const forgot = stored.account.sweep?.items.filter((x) => x.tx && !x.outcome) ?? [];
+      if (!forgot.length) return;
+      for (const x of forgot) delete x.tx;
+      await r.accounts.update(stored.account, stored.rev);
+    });
+    // Measured 2026-11-13: 38 of the 144 runs fail (docs/backend/CONNECT.md); any failure shows the matrix bites.
+expect(failures.length).toBeGreaterThan(0);
+    expect(failures.some((f) => /expected [2-9]/.test(f) || /BUG/.test(f))).toBe(true);
   }, 300_000);
 });
 

@@ -455,6 +455,29 @@ export function createConnectEngine(deps: ConnectDeps): ConnectEngine {
     return out;
   }
 
+  /**
+   * Tokens this address received in its own transactions (a swap's output)
+   * that 1Click does not list, with a balance left: the sweep cannot take
+   * them back, so the user is told before agreeing to retire the address.
+   * Tokens sent to the address by others never show up here; see CONNECT.md.
+   */
+  async function leftBehind(ctx: Ctx, listed: TokenInfo[]): Promise<string[]> {
+    const self = ctx.a.address.address;
+    const known = new Set(listed.map((t) => t.contractAddress!.toLowerCase()));
+    const received = new Set<`0x${string}`>();
+    for (const r of ctx.a.requests) {
+      if (!r.tx || r.decision !== "sent") continue;
+      const receipt = await deps.chain.receipt(r.tx.hash);
+      for (const t of receipt?.tokenTransfers ?? []) if (t.to.toLowerCase() === self.toLowerCase() && !known.has(t.token.toLowerCase())) received.add(getAddress(t.token));
+    }
+    const out: string[] = [];
+    for (const token of received) {
+      const bal = await deps.chain.tokenBalance(token, self);
+      if (bal > 0n) out.push(`token ${token} (${bal} in base units)`);
+    }
+    return out;
+  }
+
   async function planSweep(ctx: Ctx) {
     const sw = ctx.a.sweep!;
     const self = ctx.a.address.address;
@@ -473,6 +496,7 @@ export function createConnectEngine(deps: ConnectDeps): ConnectEngine {
         balance: bal.toString(),
         decision: "deposit" as const,
       }));
+    sw.unsupported = await leftBehind(ctx, tokens);
     const eth = await deps.chain.nativeBalance(self);
     const ok = await deps.approve({
       kind: "sweep",

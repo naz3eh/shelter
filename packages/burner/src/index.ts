@@ -13,7 +13,7 @@ import type { AddressBook } from "@shelter/keys";
 
 export { BASE_CHAIN_ID, BURNER_ASSETS, ETH_BASE, USDC_BASE } from "./assets.js";
 export type { BurnerAsset, BurnerAssetKey } from "./assets.js";
-export { createBaseChain } from "./chain.js";
+export { createBaseChain, ERC20_TRANSFER_TOPIC, tokenTransfersOf } from "./chain.js";
 export type { BaseChainOptions, ChainClient, Fees, Receipt, TxRequest } from "./chain.js";
 export { createBurnerEngine } from "./engine.js";
 export type { ApprovalRequest, BurnerEngine, BurnerEngineDeps, EngineOptions, Preview } from "./engine.js";
