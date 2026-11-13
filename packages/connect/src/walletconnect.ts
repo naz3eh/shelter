@@ -139,10 +139,16 @@ export function createConnectBridge(o: BridgeOptions): Bridge {
       o.kit.respondSessionRequest({ topic, response: { id, jsonrpc: "2.0", ...body } }).catch((e) => log("could not answer the dapp", e));
     try {
       if (params.chainId !== CAIP_CHAIN) throw new ConnectError("unsupported", `Shelter Connect only serves Base, not ${params.chainId}`);
-      const address = sessionAddress(o.kit.getActiveSessions()[topic]);
+      const session = o.kit.getActiveSessions()[topic];
+      const address = sessionAddress(session);
       const account = address ? await o.engine.byAddress(address) : null;
       if (!account) throw new ConnectError("not_found", "this session has no Shelter account");
-      const source: RequestSource = { origin: ev.verifyContext?.verified.origin || account.dapp.origin, ...verdict(ev.verifyContext) };
+      // Without a Verify origin, fall back to what the dapp says about itself, never to the
+      // account's own origin: that would make the origin check pass by construction.
+      const verifiedOrigin = ev.verifyContext?.verified.origin;
+      const source: RequestSource = verifiedOrigin
+        ? { origin: verifiedOrigin, ...verdict(ev.verifyContext) }
+        : { origin: session?.peer?.metadata?.url ?? "", verified: "unknown", scam: verdict(ev.verifyContext).scam };
       const result = await o.engine.handle(account.id, { method: params.request.method, params: params.request.params, rpcId: id }, source);
       await reply({ result });
     } catch (e) {

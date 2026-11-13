@@ -134,6 +134,29 @@ describe("WalletConnect bridge", () => {
     expect(kit.responses.map((x) => x.response.id)).toEqual([100, 101, 102, 103]);
   });
 
+  it("does not let a missing Verify origin pass the origin check by default", async () => {
+    const { r, kit, engine } = await setup();
+    await kit.emit("session_proposal", proposal(9));
+    await settle();
+    const [account] = await engine.list();
+    const self = account!.address.address;
+    const sign = (id: number) =>
+      kit.emit("session_request", { id, topic: "topic9", params: { request: { method: "personal_sign", params: ["0x6869", self] }, chainId: "eip155:8453" }, verifyContext: undefined });
+
+    // No Verify verdict: the dapp's own metadata URL stands in, and the user is warned it is unverified.
+    await sign(200);
+    expect(kit.responses.at(-1)!.response.result).toMatch(/^0x[0-9a-f]{130}$/);
+    const asked = r.approvals.at(-1) as { kind: string; warnings: { code: string }[] };
+    expect(asked.kind).toBe("dapp_signature");
+    expect(asked.warnings.map((w) => w.code)).toContain("dapp_unverified");
+
+    // A peer that now claims another site is refused, instead of being treated as the account's own origin.
+    (kit.sessions as Record<string, { peer: { metadata: { url: string } } }>).topic9!.peer.metadata.url = "https://evil.example";
+    await sign(201);
+    expect(kit.responses.at(-1)!.response.error).toMatchObject({ code: 4001 });
+    expect(kit.responses.at(-1)!.response.error!.message).toContain("https://evil.example");
+  });
+
   it("validates pairing URIs and project ids before touching the network", async () => {
     const { kit, engine } = await setup();
     const bridge = createConnectBridge({ kit, engine, decide: async () => null });

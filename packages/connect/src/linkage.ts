@@ -11,9 +11,16 @@
  * - as the transaction's recipient, or anywhere in its calldata (aligned
  *   ABI words and packed encodings such as swap paths alike: the check is a
  *   substring match on the hex, which a 160-bit address cannot hit by
- *   chance), or a NEAR account id as UTF-8 in the calldata (a bridge memo);
+ *   chance), or a NEAR account id in it as UTF-8 or UTF-16 bytes (a bridge
+ *   memo), or either written as text inside the data (plain or hex);
  * - anywhere in a message or typed data to sign, with or without 0x, in any
- *   letter case.
+ *   letter case, including a NEAR id written as hex and the contents of
+ *   bytes values.
+ *
+ * Matching is by substring, so an identity split into pieces at separate
+ * places, or encoded some other way (base64, hashed, XOR-ed), is not seen:
+ * the check stops a dapp naming an identity in the open, not one that hides
+ * it on purpose.
  *
  * Warnings do not block; the approval prompt shows them.
  *
@@ -22,7 +29,7 @@
  * logs, IP addresses). See docs/backend/CONNECT.md.
  */
 
-import { bytesToHex, getAddress, isAddress, isHex, maxUint160, stringToBytes } from "viem";
+import { bytesToHex, getAddress, hexToBytes, isAddress, isHex, maxUint160, stringToBytes } from "viem";
 import { BASE_CHAIN_ID, decodeErc20, messageText, type DappRequest } from "./requests.js";
 
 export interface Identity {
@@ -67,13 +74,49 @@ export interface InspectContext {
 const block = (code: FindingCode, message: string): Finding => ({ level: "block", code, message });
 const warn = (code: FindingCode, message: string): Finding => ({ level: "warn", code, message });
 
-/** Identity entries found in a hex blob (calldata or a raw message). */
+/** A NEAR id's bytes as UTF-8, UTF-16LE and UTF-16BE, as bare hex. */
+function nearEncodings(n: string): string[] {
+  const utf8 = stringToBytes(n);
+  const le = new Uint8Array(utf8.length * 2);
+  const be = new Uint8Array(utf8.length * 2);
+  // NEAR ids are ASCII (a-z, 0-9, - _ .), so each UTF-16 unit is the byte plus a zero byte.
+  utf8.forEach((b, i) => {
+    le[2 * i] = b;
+    be[2 * i + 1] = b;
+  });
+  return [utf8, le, be].map((x) => bytesToHex(x).slice(2));
+}
+
+/**
+ * Hex-encoded text forms of a NEAR id (a memo written as hex) are only matched
+ * from 6 characters on: a shorter id's hex is short enough to turn up in an
+ * unrelated number.
+ */
+const HEX_TEXT_MIN = 6;
+
+/** Bytes as one char each, for finding ASCII text (and, with zero bytes dropped, UTF-16 text) inside binary data. */
+function asLatin1(hex: string): string {
+  const bytes = hexToBytes(hex as `0x${string}`);
+  let out = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) out += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return out;
+}
+
+/**
+ * Identity entries found in a hex blob (calldata, a raw message, a bytes
+ * value): raw EVM addresses and NEAR ids as bytes, plus anything readable as
+ * text inside it (an address or account written as a string, plain or hex).
+ */
 function inHex(hex: string, id: Identity): string[] {
   const h = hex.toLowerCase();
-  const hits: string[] = [];
-  for (const [a, label] of id.evm) if (h.includes(a.slice(2))) hits.push(`${label} (${getAddress(a)})`);
-  for (const n of id.near) if (n.length >= 2 && h.includes(bytesToHex(stringToBytes(n)).slice(2))) hits.push(`NEAR account ${n}`);
-  return hits;
+  const hits = new Set<string>();
+  for (const [a, label] of id.evm) if (h.includes(a.slice(2))) hits.add(`${label} (${getAddress(a)})`);
+  for (const n of id.near) if (n.length >= 2 && nearEncodings(n).some((e) => h.includes(e))) hits.add(`NEAR account ${n}`);
+  if (h.length > 2 && h.length % 2 === 0) {
+    const text = asLatin1(h);
+    for (const x of [...inText(text, id), ...inText(text.replaceAll("\0", ""), id)]) hits.add(x);
+  }
+  return [...hits];
 }
 
 /**
@@ -88,7 +131,9 @@ function inText(text: string, id: Identity): string[] {
   const t = text.toLowerCase();
   const hits: string[] = [];
   for (const [a, label] of id.evm) if (t.includes(a.slice(2))) hits.push(`${label} (${getAddress(a)})`);
-  for (const n of id.near) if (nearPattern(n).test(t)) hits.push(`NEAR account ${n}`);
+  for (const n of id.near) {
+    if (nearPattern(n).test(t) || (n.length >= HEX_TEXT_MIN && nearEncodings(n).some((e) => t.includes(e)))) hits.push(`NEAR account ${n}`);
+  }
   return hits;
 }
 
@@ -143,7 +188,8 @@ export function inspect(req: DappRequest, ctx: InspectContext): Finding[] {
       const text = messageText(req.message);
       // Readable text is checked as text; a binary message (not UTF-8) is checked as hex.
       const binary = isHex(req.message) && text === req.message;
-      const hits = [...new Set([...inText(text, id), ...(binary ? inHex(req.message, id) : [])])];
+      // UTF-16 text decodes as UTF-8 with a NUL after each letter; read it without them too.
+      const hits = [...new Set([...inText(text, id), ...inText(text.replaceAll("\0", ""), id), ...(binary ? inHex(req.message, id) : [])])];
       if (hits.length) out.push(block("message_linked", `the message names ${hits.join(", ")}`));
       const siwe = SIWE.exec(text);
       if (siwe) {
@@ -163,6 +209,8 @@ export function inspect(req: DappRequest, ctx: InspectContext): Finding[] {
           if (label) hits.add(`${label} (${getAddress(s)})`);
         }
         for (const h of inText(s, id)) hits.add(h);
+        // A bytes value: also read what it encodes.
+        if (isHex(s) && s.length > 2) for (const h of inHex(s, id)) hits.add(h);
       });
       if (hits.size) out.push(block("typed_data_linked", `the data to sign names ${[...hits].join(", ")}`));
       const chain = (req.typedData.domain as { chainId?: unknown } | undefined)?.chainId;
