@@ -116,6 +116,16 @@ pnpm --filter @shelter/cli connect close ca_... --account you.near        # swee
 
 Verified on Base mainnet on 2026-11-12: Uniswap funded from the confidential balance, a 0.5 USDC swap, a send to the linked main wallet blocked, and a close that returned the USDC and ETH and retired the address (transactions in [CONNECT.md](docs/backend/CONNECT.md#verified-on-mainnet-2026-11-12-funded)).
 
+## Try the web app
+
+The web UI replays the recorded Uniswap Connect session: no sign-in, no funds, no keys and no network calls.
+
+- run `pnpm install --frozen-lockfile && pnpm --filter web dev` - see the app on http://localhost:3000. Dev and build use webpack because the workspace packages use NodeNext `.js` import specifiers that Turbopack cannot resolve yet.
+- open http://localhost:3000 and click **Try it** - see the recorded session open on the block moment: Uniswap asking to send 0.1 USDC to your main wallet, refused by the linkage check before anything is signed.
+- scroll down - see the before/after link graph, the dapp card with "Close and sweep back", the funding timeline (deposit, dapp funding, swap, sweep back), and the verified panel where every signature and transaction is re-checked offline against the recording.
+- paste your own addresses and a transaction or typed-data JSON into **Try the linkage check** - see blocked or allowed with the reason, computed live in your browser.
+- `NEXT_PUBLIC_SHELTER_LIVE=1` selects the live wallet source once `packages/connect` ships a browser entry; today it shows a typed stub that says so.
+
 ## Recorded mainnet runs
 
 `demo record` assembles a recording from the local databases: deposits, burner jobs and Connect sessions (`--connect ca_...` adds the session and its funding jobs).
