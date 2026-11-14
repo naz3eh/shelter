@@ -1,8 +1,9 @@
 "use client";
 
-import { ArrowLeftRight, FileSignature, PenLine, RefreshCw, Send, ShieldX, Wallet } from "lucide-react";
+import { ArrowLeftRight, ChevronRight, FileSignature, PenLine, RefreshCw, Send, ShieldX, Wallet } from "lucide-react";
 import type { RequestRecord } from "@shelter/connect";
 import { requestListLabel } from "@/lib/request-decode";
+import { Pill } from "./primitives";
 import { cn } from "@/lib/utils";
 
 const METHOD_ICON = {
@@ -14,13 +15,13 @@ const METHOD_ICON = {
   eth_accounts: Wallet,
 } as const;
 
-const DECISION_STYLE: Record<string, string> = {
-  sent: "border-emerald-500/40 bg-emerald-500/10 text-emerald-300",
-  signed: "border-emerald-500/40 bg-emerald-500/10 text-emerald-300",
-  blocked: "border-destructive/50 bg-destructive/15 text-red-300",
-  rejected: "border-border bg-muted text-muted-foreground",
-  failed: "border-destructive/50 bg-destructive/15 text-red-300",
-  not_sent: "border-border bg-muted text-muted-foreground",
+const DECISION_PILL: Record<string, { tone: "ok" | "danger" | "neutral"; label: string }> = {
+  sent: { tone: "ok", label: "sent" },
+  signed: { tone: "ok", label: "signed" },
+  blocked: { tone: "danger", label: "Blocked by Shelter" },
+  rejected: { tone: "neutral", label: "rejected" },
+  failed: { tone: "danger", label: "failed" },
+  not_sent: { tone: "neutral", label: "not sent" },
 };
 
 export function methodIcon(method: string) {
@@ -36,45 +37,41 @@ export function RequestRow({
 }) {
   const Icon = methodIcon(request.method);
   const blocked = request.decision === "blocked";
-  const decision = request.decision;
+  const pill = request.decision ? DECISION_PILL[request.decision] : undefined;
   return (
     <li>
       <button
         type="button"
         onClick={onOpen}
         className={cn(
-          "flex w-full items-start gap-3 rounded-xl border px-4 py-3 text-left transition-colors",
-          "border-border bg-card/60 hover:border-border-strong hover:bg-card",
-          "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
-          blocked && "border-destructive/40",
+          "group flex w-full items-start gap-3 rounded-xl p-4 text-left transition-colors",
+          "focus-visible:outline-none focus-visible:ring-2",
+          blocked
+            ? "border border-destructive/30 bg-destructive/[0.06] shadow-[var(--shadow-panel)] hover:bg-destructive/10 focus-visible:ring-destructive/60"
+            : "panel hover:bg-accent/60 focus-visible:ring-ring",
         )}
       >
         <span
           className={cn(
-            "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border",
+            "grid size-8 shrink-0 place-items-center rounded-lg border",
             blocked
-              ? "border-destructive/40 bg-destructive/10 text-red-300"
-              : "border-border bg-muted text-muted-foreground",
+              ? "border-destructive/30 bg-destructive/10 text-destructive"
+              : "bg-surface-2 text-muted-foreground",
           )}
           aria-hidden
         >
-          {blocked ? <ShieldX className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
+          {blocked ? <ShieldX className="size-4" /> : <Icon className="size-4" />}
         </span>
         <span className="min-w-0 flex-1">
-          <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className="text-sm font-medium text-foreground">{requestListLabel(request)}</span>
-            {decision ? (
-              <span
-                className={cn(
-                  "rounded-full border px-2 py-0.5 text-[11px] font-medium",
-                  DECISION_STYLE[decision] ?? DECISION_STYLE.not_sent,
-                )}
-              >
-                {decision === "blocked" ? "Blocked by Shelter" : decision}
-              </span>
+          <span className="block text-sm leading-7">
+            {requestListLabel(request)}{" "}
+            {pill ? (
+              <Pill tone={pill.tone} className="align-middle">
+                {pill.label}
+              </Pill>
             ) : null}
           </span>
-          <span className="mt-1 block text-xs text-muted-foreground">
+          <span className="mt-0.5 block font-mono text-xs text-faint">
             {request.method} ·{" "}
             {new Date(request.at).toLocaleString([], {
               month: "short",
@@ -84,6 +81,9 @@ export function RequestRow({
             })}
           </span>
         </span>
+        {blocked ? (
+          <ChevronRight className="mt-2 size-4 shrink-0 text-destructive transition-transform group-hover:translate-x-0.5" aria-hidden />
+        ) : null}
       </button>
     </li>
   );

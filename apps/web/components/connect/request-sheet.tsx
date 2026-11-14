@@ -7,12 +7,13 @@
  */
 
 import { useMemo } from "react";
-import { AlertTriangle, CheckCircle2, ShieldX } from "lucide-react";
+import { AlertTriangle, Ban, ShieldCheck, ShieldX } from "lucide-react";
 import { CopyableHash } from "./copyable-hash";
 import { parseRequest, type Finding, type RequestRecord } from "@shelter/connect";
 import { BottomSheet } from "@/components/motion/bottom-sheet";
 import { decodeDappRequest } from "@/lib/request-decode";
-import { BASESCAN_ADDRESS, BASESCAN_TX, formatToken, shortenAddresses } from "@/lib/connect-format";
+import { BASESCAN_ADDRESS, BASESCAN_TX, shortenAddresses } from "@/lib/connect-format";
+import { Pill } from "./primitives";
 import { cn } from "@/lib/utils";
 import type { ConnectAccountView } from "@/lib/connect-source";
 
@@ -22,15 +23,6 @@ export interface RequestSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
-
-const DECISION_LABEL: Record<string, { text: string; className: string }> = {
-  sent: { text: "Sent", className: "border-emerald-500/40 bg-emerald-500/10 text-emerald-300" },
-  signed: { text: "Signed", className: "border-emerald-500/40 bg-emerald-500/10 text-emerald-300" },
-  blocked: { text: "Blocked", className: "border-destructive/50 bg-destructive/15 text-red-300" },
-  rejected: { text: "Rejected", className: "border-border bg-muted text-muted-foreground" },
-  failed: { text: "Failed", className: "border-destructive/50 bg-destructive/15 text-red-300" },
-  not_sent: { text: "Not sent", className: "border-border bg-muted text-muted-foreground" },
-};
 
 /** What a block-level finding means for the person, in one sentence. */
 function findingSentence(f: Finding): string {
@@ -83,8 +75,9 @@ export function RequestSheet({ view, request, open, onOpenChange }: RequestSheet
   if (!request) return null;
 
   const dappName = account.dapp.name ?? account.dapp.origin;
-  const decision = request.decision ? DECISION_LABEL[request.decision] : undefined;
   const isBlocked = request.decision === "blocked";
+  const isSigned = request.decision === "signed";
+  const isSent = request.decision === "sent";
   const blockFindings = request.findings.filter((f) => f.level === "block");
   const warnFindings = request.findings.filter((f) => f.level === "warn");
   const otherFindings = request.findings.filter((f) => f.level !== "block" && f.level !== "warn");
@@ -101,55 +94,71 @@ export function RequestSheet({ view, request, open, onOpenChange }: RequestSheet
     >
       <div className="flex flex-col gap-4">
         {isBlocked ? (
-          <div
-            role="alert"
-            className="rounded-xl border border-destructive/50 bg-destructive/10 px-4 py-4"
-          >
-            <div className="flex items-center gap-2 text-base font-semibold text-red-300">
-              <ShieldX className="h-5 w-5" aria-hidden />
-              Blocked by Shelter
-            </div>
-            <p className="mt-2 text-sm text-foreground">{blockHeadline(request, view)}</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Approving it would have tied this dapp&apos;s address to someone you already
-              use. Nothing was signed or sent.
+          <div className="flex flex-col items-center px-2 py-2 text-center">
+            <span className="relative grid size-14 place-items-center rounded-2xl border border-destructive/40 bg-destructive/15 text-destructive">
+              <span aria-hidden className="absolute inset-0 rounded-2xl ring-8 ring-destructive/5" />
+              <ShieldX className="size-7" aria-hidden />
+            </span>
+            <p className="mt-4 text-xl font-semibold tracking-tight">Blocked by Shelter</p>
+            <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
+              {blockHeadline(request, view)} Approving it would have tied this
+              dapp&apos;s address to someone you already use. Nothing was signed or
+              sent.
             </p>
             {codes.length ? (
-              <div className="mt-3 flex flex-wrap gap-1.5">
+              <div className="mt-3 flex flex-wrap justify-center gap-1.5">
                 {codes.map((c) => (
-                  <code
+                  <span
                     key={c}
-                    className="rounded-md border border-destructive/40 bg-destructive/10 px-2 py-0.5 font-mono text-[11px] text-red-300"
+                    className="inline-flex items-center gap-1.5 rounded-md border border-destructive/35 bg-destructive/10 px-2 py-1 font-mono text-xs text-destructive"
                   >
+                    <Ban className="size-3" aria-hidden />
                     {c}
-                  </code>
+                  </span>
                 ))}
               </div>
             ) : null}
           </div>
-        ) : decision ? (
-          <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
-            <CheckCircle2 className="h-4 w-4" aria-hidden />
-            {decision.text}
-            {request.tx ? (
-              <span className="ml-auto inline-flex items-center gap-2 font-mono text-xs text-emerald-300">
+        ) : isSent || isSigned ? (
+          <div className="flex flex-col items-center px-2 py-2 text-center">
+            <span className="relative grid size-14 place-items-center rounded-2xl border border-shelter/40 bg-shelter/15 text-shelter">
+              <span aria-hidden className="absolute inset-0 rounded-2xl ring-8 ring-shelter/5" />
+              <ShieldCheck className="size-7" aria-hidden />
+            </span>
+            <p className="mt-4 text-xl font-semibold tracking-tight">Allowed by Shelter</p>
+            <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
+              {isSigned
+                ? "This signature stayed inside the dapp's own address. Nothing was sent on-chain."
+                : "This request stayed inside the dapp's own address, was signed by it, and mined on Base."}
+            </p>
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+              <Pill tone="ok" className="align-middle">
+                {isSigned ? "signed" : "sent"}
+              </Pill>
+              {request.tx ? (
                 <CopyableHash
                   value={request.tx.hash}
                   href={BASESCAN_TX(request.tx.hash)}
                   label="Copy transaction hash"
-                  className="text-emerald-300"
                 />
-              </span>
-            ) : null}
+              ) : null}
+            </div>
+          </div>
+        ) : request.decision ? (
+          <div className="flex items-center gap-2 rounded-xl border border-border bg-surface/60 px-4 py-3 text-sm text-muted-foreground">
+            <Pill className="align-middle">{request.decision.replace("_", " ")}</Pill>
           </div>
         ) : null}
 
         {decoded ? (
-          <dl className="grid grid-cols-[7.5rem_1fr] gap-x-3 gap-y-2 text-sm">
+          <dl className="divide-y rounded-xl border bg-background/50 text-sm">
             {decoded.fields.map((f) => (
-              <div key={f.label} className="contents">
-                <dt className="text-muted-foreground">{f.label}</dt>
-                <dd className={cn("min-w-0 break-words text-foreground", f.mono && "font-mono text-[13px]", f.warn && "font-medium text-amber-300")}>
+              <div
+                key={f.label}
+                className="grid grid-cols-[7.5rem_minmax(0,1fr)] items-center gap-3 px-4 py-2.5"
+              >
+                <dt className="text-faint">{f.label}</dt>
+                <dd className={cn("min-w-0 justify-self-end text-right", f.mono && "font-mono text-[13px]", f.warn && "font-medium text-warn")}>
                   {f.value}
                 </dd>
               </div>
@@ -162,27 +171,36 @@ export function RequestSheet({ view, request, open, onOpenChange }: RequestSheet
         {decoded?.warnings.map((w) => (
           <div
             key={w}
-            className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-200"
+            className="flex items-start gap-2 rounded-lg border border-warn/30 bg-warn/10 px-3 py-2 text-sm text-warn"
           >
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+            <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
             {w}
           </div>
         ))}
 
-        {blockFindings.length || warnFindings.length || otherFindings.length ? (
-          <div className="rounded-lg border border-border bg-muted/40 px-3 py-2">
-            <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        {blockFindings.length || warnFindings.length || otherFindings.length || isSent || isSigned ? (
+          <div className="rounded-xl border bg-surface/60 p-4">
+            <div className="text-xs font-medium uppercase tracking-wider text-faint">
               Shelter checks
             </div>
-            <ul className="mt-1.5 flex flex-col gap-1.5">
+            {!blockFindings.length && !warnFindings.length && !otherFindings.length ? (
+              <p className="mt-3 flex items-start gap-2 text-sm">
+                <ShieldCheck className="mt-0.5 size-4 shrink-0 text-shelter" aria-hidden />
+                <span>
+                  No findings: the request names nothing on your list.
+                </span>
+              </p>
+            ) : null}
+            {blockFindings.length || warnFindings.length || otherFindings.length ? (
+            <ul className="mt-3 space-y-2">
               {[...blockFindings, ...warnFindings, ...otherFindings].map((f, i) => (
-                <li key={`${f.code}-${i}`} className="flex items-start gap-2 text-xs">
+                <li key={`${f.code}-${i}`} className="flex items-start gap-2 text-sm">
                   <span
                     className={cn(
-                      "mt-0.5 inline-block h-3.5 w-3.5 shrink-0 rounded-full text-center leading-3.5",
+                      "mt-0.5 inline-block size-4 shrink-0 rounded-full text-center leading-4",
                       f.level === "block"
-                        ? "bg-destructive/25 text-red-300"
-                        : "bg-amber-500/20 text-amber-300",
+                        ? "bg-destructive/25 text-destructive"
+                        : "bg-warn/20 text-warn",
                     )}
                     aria-hidden
                   >
@@ -195,6 +213,7 @@ export function RequestSheet({ view, request, open, onOpenChange }: RequestSheet
                 </li>
               ))}
             </ul>
+            ) : null}
           </div>
         ) : null}
 
@@ -227,7 +246,7 @@ export function RequestSheet({ view, request, open, onOpenChange }: RequestSheet
         ) : null}
 
         {isBlocked ? (
-          <p className="text-xs text-muted-foreground">
+          <p className="text-center text-xs leading-relaxed text-faint">
             Reason codes: {codes.join(", ") || "see findings"}. A blocked request cannot be
             approved later; the dapp has to ask for something that stays unlinkable.
           </p>

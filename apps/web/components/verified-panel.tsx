@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { RefreshCw } from "lucide-react";
 import {
   createDcapQuoteVerifier,
   DEFAULT_MODEL,
@@ -13,18 +14,11 @@ import {
   type VerificationResult,
 } from "@shelter/attest";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/motion/card";
-import { AnimatedBadge } from "@/components/motion/animated-badge";
-import { StatefulButton } from "@/components/motion/button/stateful";
-import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/motion/collapsible";
+import { Btn, Pill } from "@/components/connect/primitives";
 import { cn } from "@/lib/utils";
 
 export interface VerifiedPanelProps {
@@ -44,7 +38,7 @@ export interface VerifiedPanelProps {
 const short = (value: string | undefined, keep = 8) =>
   value && value.length > keep * 2
     ? `${value.slice(0, keep)}…${value.slice(-keep)}`
-    : (value ?? "—");
+    : (value ?? "-");
 
 type Phase = "checking" | "done";
 
@@ -141,73 +135,72 @@ export function VerifiedPanel({
   const passCount = checks.filter((c) => c.ok).length;
 
   return (
-    <div className={cn("flex flex-col gap-3", className)}>
-      <Card size="compact" className="bg-card/80">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <CardTitle as="h3">TEE attestation</CardTitle>
-            <AnimatedBadge
-              size="sm"
-              status={checking ? "loading" : verified ? "success" : "danger"}
-              contentKey={checking ? "checking" : verified ? "ok" : "fail"}
-            >
-              {checking ? "Checking…" : verified ? "Verified" : "Not verified"}
-            </AnimatedBadge>
+    <div className={cn("panel p-5", className)}>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <h3 className="font-medium">TEE attestation</h3>
+          <Pill tone={checking ? "neutral" : verified ? "ok" : "danger"}>
+            {checking ? "Checking…" : verified ? "Verified" : "Not verified"}
+          </Pill>
+        </div>
+        <Btn
+          className="h-8 text-xs"
+          onClick={() => setRunId((n) => n + 1)}
+          disabled={checking}
+        >
+          <RefreshCw className={cn("size-3.5", checking && "animate-spin")} aria-hidden />
+          Re-check
+        </Btn>
+      </div>
+      <dl className="mt-4 divide-y rounded-lg border bg-background/40 text-sm">
+        <div className="grid grid-cols-[120px_minmax(0,1fr)] items-center gap-3 px-4 py-2.5">
+          <dt className="text-faint">nonce</dt>
+          <dd className="font-mono text-xs text-foreground">
+            {result ? short(result.nonce, 8) : "generating…"}
+          </dd>
+        </div>
+        <div className="grid grid-cols-[120px_minmax(0,1fr)] items-center gap-3 px-4 py-2.5">
+          <dt className="text-faint">model signer</dt>
+          <dd className="font-mono text-xs text-muted-foreground">
+            {result?.signingAddress ? short(result.signingAddress, 10) : "-"}
+          </dd>
+        </div>
+        {sigResult?.signer ? (
+          <div className="grid grid-cols-[120px_minmax(0,1fr)] items-center gap-3 px-4 py-2.5">
+            <dt className="text-faint">answer signer</dt>
+            <dd className="font-mono text-xs text-foreground">
+              {short(sigResult.signer, 10)}
+            </dd>
           </div>
-          <CardContent className="mt-1 flex-col items-end p-0">
-            <StatefulButton
-              size="sm"
-              variant="outline"
-              state={checking ? "loading" : "idle"}
-              loadingText="Checking…"
-              disabled={checking}
-              onClick={() => setRunId((n) => n + 1)}
-            >
-              Re-check
-            </StatefulButton>
-          </CardContent>
-        </CardHeader>
-        <CardContent>
-          <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
-            <dt className="text-muted-foreground">nonce</dt>
-            <dd className="font-mono text-foreground">
-              {result ? short(result.nonce, 8) : "generating…"}
-            </dd>
-            <dt className="text-muted-foreground">model signer</dt>
-            <dd className="font-mono text-foreground">
-              {result?.signingAddress
-                ? short(result.signingAddress, 10)
-                : "—"}
-            </dd>
-            {sigResult?.signer ? (
-              <>
-                <dt className="text-muted-foreground">answer signer</dt>
-                <dd className="font-mono text-foreground">
-                  {short(sigResult.signer, 10)}
-                </dd>
-              </>
-            ) : null}
-          </dl>
+        ) : null}
+      </dl>
 
-          <Collapsible className="mt-3">
-            <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground">
-              <span>
-                {checks.length
-                  ? `${passCount}/${checks.length} checks passed — details`
-                  : "running checks…"}
-              </span>
-              <span aria-hidden>{checking ? "…" : "▾"}</span>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <ul className="mt-1 flex flex-col gap-1">
-                {checks.map((c) => (
-                  <CheckRow key={c.name} check={c} />
-                ))}
-              </ul>
-            </CollapsibleContent>
-          </Collapsible>
-        </CardContent>
-      </Card>
+      <Collapsible className="group mt-3 text-xs text-muted-foreground">
+        <CollapsibleTrigger className="flex w-full cursor-pointer list-none items-center gap-1.5 rounded-md px-1 py-1 text-left hover:text-foreground [&::-webkit-details-marker]:hidden">
+          <svg
+            className="size-3.5 transition-transform group-data-[state=open]:rotate-90"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            aria-hidden
+          >
+            <path d="m9 18 6-6-6-6" />
+          </svg>
+          <span>
+            {checks.length
+              ? `${passCount}/${checks.length} checks passed, details`
+              : "running checks…"}
+          </span>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <ul className="mt-1 flex flex-col gap-1 px-1 pb-1">
+            {checks.map((c) => (
+              <CheckRow key={c.name} check={c} />
+            ))}
+          </ul>
+        </CollapsibleContent>
+      </Collapsible>
 
       {children !== undefined ? (
         verified ? (
@@ -215,9 +208,9 @@ export function VerifiedPanel({
         ) : failed ? (
           <div
             role="alert"
-            className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-foreground"
+            className="mt-3 rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-foreground"
           >
-            AI answer hidden — attestation failed
+            AI answer hidden, attestation failed
             {failing.length ? `: ${failing.map((c) => c.name).join(", ")}` : ""}.
           </div>
         ) : null
@@ -233,7 +226,7 @@ function CheckRow({ check }: { check: AttestationCheck }) {
         className={cn(
           "mt-0.5 inline-block h-3.5 w-3.5 shrink-0 rounded-full text-center leading-3.5",
           check.ok
-            ? "bg-emerald-500/15 text-emerald-400"
+            ? "bg-shelter/15 text-shelter"
             : "bg-destructive/20 text-destructive",
         )}
         aria-hidden

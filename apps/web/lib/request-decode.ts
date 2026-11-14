@@ -117,7 +117,7 @@ function decodeTransaction(req: Extract<DappRequest, { method: "eth_sendTransact
       value: unlimited ? "Unlimited" : token ? formatToken(e.amount.toString(), token.decimals, token.symbol) : `${e.amount} base units`,
       warn: unlimited,
     });
-    listLabel = `Approve ${token?.symbol ?? "tokens"} to ${contractLabel(e.spender)}${unlimited ? " — unlimited" : ""}`;
+    listLabel = `Approve ${token?.symbol ?? "tokens"} to ${contractLabel(e.spender)}${unlimited ? ", unlimited" : ""}`;
     if (unlimited) {
       warnings.push("Unlimited approval: the spender can move any amount of this token, now and later.");
     }

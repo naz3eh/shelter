@@ -8,12 +8,13 @@
  */
 
 import { motion, useReducedMotion } from "motion/react";
-import { ArrowDownToLine, Ban, Coins, Send, Undo2 } from "lucide-react";
+import { ArrowDownToLine, Ban, Link2, Lock, Send, Undo2 } from "lucide-react";
 import type { ConnectAccountView } from "@/lib/connect-source";
 import { BURNER_ASSETS } from "@shelter/burner";
 import { requestListLabel } from "@/lib/request-decode";
 import { CopyableHash } from "./copyable-hash";
 import { BASESCAN_TX, formatToken, shortHash } from "@/lib/connect-format";
+import { Pill, Reveal, SectionTitle, truncMid } from "./primitives";
 import { cn } from "@/lib/utils";
 
 type Tone = "open" | "funding" | "use" | "blocked" | "sweep" | "close";
@@ -30,21 +31,21 @@ interface TimelineEvent {
 }
 
 const TONE_ICON = {
-  open: Coins,
+  open: Link2,
   funding: ArrowDownToLine,
   use: Send,
   blocked: Ban,
   sweep: Undo2,
-  close: Coins,
+  close: Lock,
 } as const;
 
-const TONE_DOT = {
-  open: "bg-muted-foreground/50",
-  funding: "bg-sky-400/80",
-  use: "bg-emerald-400/80",
-  blocked: "bg-red-400/90",
-  sweep: "bg-violet-400/80",
-  close: "bg-muted-foreground/50",
+const TONE_CHIP = {
+  open: "border bg-surface-2 text-muted-foreground",
+  funding: "border border-shelter/30 bg-shelter/12 text-shelter",
+  use: "border border-shelter/30 bg-shelter/12 text-shelter",
+  blocked: "border border-destructive/35 bg-destructive/12 text-destructive",
+  sweep: "border border-shelter/30 bg-shelter/12 text-shelter",
+  close: "border border-shelter/30 bg-shelter/12 text-shelter",
 } as const;
 
 function buildEvents(view: ConnectAccountView): TimelineEvent[] {
@@ -59,7 +60,6 @@ function buildEvents(view: ConnectAccountView): TimelineEvent[] {
   });
 
   for (const job of fundingJobs) {
-    const isFund = job.action.kind === "fund";
     const legs = [
       ...job.gas.map((leg, i) => ({ leg, which: i === 0 ? "gas" : `gas top-up ${i}` })),
       ...(job.asset ? [{ leg: job.asset, which: "asset" as const }] : []),
@@ -78,7 +78,6 @@ function buildEvents(view: ConnectAccountView): TimelineEvent[] {
         });
       }
     }
-    void isFund;
   }
 
   for (const r of account.requests) {
@@ -114,56 +113,65 @@ function buildEvents(view: ConnectAccountView): TimelineEvent[] {
   return events.sort((a, b) => a.at.localeCompare(b.at));
 }
 
+/** Renders 0x… addresses inside a timeline title as copyable chips. */
+function TlTitle({ s }: { s: string }) {
+  return (
+    <>
+      {s.split(/(0x[a-fA-F0-9]{30,})/).map((p, i) =>
+        /^0x[a-fA-F0-9]{30,}$/.test(p) ? (
+          <span key={i} className="font-mono text-[0.85em]">{truncMid(p)}</span>
+        ) : (
+          <span key={i}>{p}</span>
+        ),
+      )}
+    </>
+  );
+}
+
 export function FundingTimeline({ view }: { view: ConnectAccountView }) {
   const reduce = useReducedMotion();
   const events = buildEvents(view);
   return (
-    <section id="connect-timeline" className="flex scroll-mt-24 flex-col gap-4">
-      <div>
-        <h2 className="text-lg font-semibold text-foreground">Funding timeline</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          The money goes confidential balance to dapp address and back through
-          1Click. It never touches your NEAR account&apos;s public side or your main
-          wallet.
-        </p>
-      </div>
-      <ol className="relative flex flex-col gap-0">
+    <Reveal>
+      <SectionTitle
+        title="Funding timeline"
+        sub="The money goes confidential balance to dapp address and back through 1Click. It never touches your NEAR account's public side or your main wallet."
+      />
+      <ol className="relative ml-4 border-l pl-8">
         {events.map((e, i) => {
           const Icon = TONE_ICON[e.tone];
-          const last = i === events.length - 1;
           return (
             <motion.li
               key={`${e.at}-${i}`}
-              initial={reduce ? false : { opacity: 0, x: -8 }}
-              whileInView={reduce ? undefined : { opacity: 1, x: 0 }}
+              initial={reduce ? false : { opacity: 0, y: 8 }}
+              whileInView={reduce ? undefined : { opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-40px" }}
-              transition={{ duration: 0.3, delay: Math.min(i * 0.04, 0.4) }}
-              className="relative flex gap-3 pb-5 last:pb-0"
+              transition={{ duration: 0.35, delay: Math.min(i * 0.04, 0.4) }}
+              className="relative pb-8 last:pb-0"
             >
-              {!last ? (
-                <span className="absolute left-[15px] top-8 h-[calc(100%-2rem)] w-px bg-border" aria-hidden />
-              ) : null}
               <span
                 className={cn(
-                  "z-10 mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-card",
-                  TONE_DOT[e.tone],
+                  "absolute -left-[49px] top-0 grid size-8 place-items-center rounded-full ring-4 ring-background",
+                  TONE_CHIP[e.tone],
                 )}
                 aria-hidden
               >
-                <Icon className="h-3.5 w-3.5" />
+                <Icon className="size-3.5" />
               </span>
-              <div className="min-w-0 flex-1 pt-0.5">
-                <div className="flex flex-wrap items-baseline gap-x-2">
-                  <span className="text-sm text-foreground">{e.title}</span>
-                  {e.status ? (
-                    <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                      1Click: {e.status}
-                      {e.outcome ? ` · ${e.outcome}` : ""}
-                    </span>
-                  ) : null}
-                </div>
-                {e.detail ? <p className="mt-0.5 text-xs text-muted-foreground">{e.detail}</p> : null}
-                <p className="mt-0.5 text-[11px] text-muted-foreground">
+              <p className="break-words text-sm leading-6">
+                <TlTitle s={e.title} />
+                {e.status ? (
+                  <Pill tone={e.status === "SUCCESS" ? "ok" : "warn"} className="ml-2 align-middle font-mono text-[10px]">
+                    1Click: {e.status}
+                    {e.outcome ? ` · ${e.outcome}` : ""}
+                  </Pill>
+                ) : null}
+              </p>
+              <p className={cn("mt-0.5 text-xs", e.tone === "blocked" ? "text-destructive" : "text-muted-foreground")}>
+                {e.detail}
+              </p>
+              <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-faint">
+                <span className="tabular-nums">
                   {new Date(e.at).toLocaleString([], {
                     month: "short",
                     day: "numeric",
@@ -171,22 +179,13 @@ export function FundingTimeline({ view }: { view: ConnectAccountView }) {
                     minute: "2-digit",
                     second: "2-digit",
                   })}
-                  {e.hash ? (
-                    <>
-                      {" · "}
-                      <CopyableHash
-                        value={e.hash}
-                        href={BASESCAN_TX(e.hash)}
-                        label="Copy transaction hash"
-                      />
-                    </>
-                  ) : null}
-                </p>
-              </div>
+                </span>
+                {e.hash ? <CopyableHash value={e.hash} href={BASESCAN_TX(e.hash)} label="Copy transaction hash" /> : null}
+              </p>
             </motion.li>
           );
         })}
       </ol>
-    </section>
+    </Reveal>
   );
 }
