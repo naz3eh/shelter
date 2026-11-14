@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "motion/react";
-import { Play } from "lucide-react";
+import { Play, ShieldCheck } from "lucide-react";
 import { ConnectDemo } from "@/components/connect/connect-demo";
 import { Reveal } from "@/components/connect/primitives";
 import { cn } from "@/lib/utils";
@@ -59,8 +59,9 @@ function Hero() {
           your other wallets are blocked, and closing sweeps the funds home. No
           sign-in, no funds, no keys needed to try it.
         </motion.p>
-        <motion.div {...f(0.18)} className="mt-8">
+        <motion.div {...f(0.18)} className="mt-8 flex flex-wrap gap-3">
           <TryIt />
+          <TryAllowed />
         </motion.div>
       </div>
     </header>
@@ -84,6 +85,25 @@ function TryIt() {
     >
       <Play className="size-3.5 fill-current" aria-hidden />
       Try it
+    </button>
+  );
+}
+
+function TryAllowed() {
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        document.getElementById("connect-demo")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        window.dispatchEvent(new CustomEvent("shelter:try-allowed"));
+      }}
+      className={cn(
+        "inline-flex h-10 items-center justify-center gap-2 rounded-lg border bg-surface-2 px-5 text-sm font-medium text-foreground transition-colors hover:bg-accent",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+      )}
+    >
+      <ShieldCheck className="size-3.5" aria-hidden />
+      Try an allowed request
     </button>
   );
 }

@@ -7,7 +7,7 @@
  */
 
 import { useMemo } from "react";
-import { AlertTriangle, Ban, CheckCircle2, ShieldX } from "lucide-react";
+import { AlertTriangle, Ban, ShieldCheck, ShieldX } from "lucide-react";
 import { CopyableHash } from "./copyable-hash";
 import { parseRequest, type Finding, type RequestRecord } from "@shelter/connect";
 import { BottomSheet } from "@/components/motion/bottom-sheet";
@@ -120,19 +120,29 @@ export function RequestSheet({ view, request, open, onOpenChange }: RequestSheet
             ) : null}
           </div>
         ) : isSent || isSigned ? (
-          <div className="flex items-center gap-2 rounded-xl border border-shelter/30 bg-shelter/10 px-4 py-3 text-sm text-shelter">
-            <CheckCircle2 className="size-4 shrink-0" aria-hidden />
-            {isSigned ? "Signed" : "Sent"}
-            {request.tx ? (
-              <span className="ml-auto inline-flex items-center gap-2 font-mono text-xs text-shelter">
+          <div className="flex flex-col items-center px-2 py-2 text-center">
+            <span className="relative grid size-14 place-items-center rounded-2xl border border-shelter/40 bg-shelter/15 text-shelter">
+              <span aria-hidden className="absolute inset-0 rounded-2xl ring-8 ring-shelter/5" />
+              <ShieldCheck className="size-7" aria-hidden />
+            </span>
+            <p className="mt-4 text-xl font-semibold tracking-tight">Allowed by Shelter</p>
+            <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
+              {isSigned
+                ? "This signature stayed inside the dapp's own address. Nothing was sent on-chain."
+                : "This request stayed inside the dapp's own address, was signed by it, and mined on Base."}
+            </p>
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+              <Pill tone="ok" className="align-middle">
+                {isSigned ? "signed" : "sent"}
+              </Pill>
+              {request.tx ? (
                 <CopyableHash
                   value={request.tx.hash}
                   href={BASESCAN_TX(request.tx.hash)}
                   label="Copy transaction hash"
-                  className="text-shelter"
                 />
-              </span>
-            ) : null}
+              ) : null}
+            </div>
           </div>
         ) : request.decision ? (
           <div className="flex items-center gap-2 rounded-xl border border-border bg-surface/60 px-4 py-3 text-sm text-muted-foreground">
@@ -168,11 +178,20 @@ export function RequestSheet({ view, request, open, onOpenChange }: RequestSheet
           </div>
         ))}
 
-        {blockFindings.length || warnFindings.length || otherFindings.length ? (
+        {blockFindings.length || warnFindings.length || otherFindings.length || isSent || isSigned ? (
           <div className="rounded-xl border bg-surface/60 p-4">
             <div className="text-xs font-medium uppercase tracking-wider text-faint">
               Shelter checks
             </div>
+            {!blockFindings.length && !warnFindings.length && !otherFindings.length ? (
+              <p className="mt-3 flex items-start gap-2 text-sm">
+                <ShieldCheck className="mt-0.5 size-4 shrink-0 text-shelter" aria-hidden />
+                <span>
+                  No findings: the request names nothing on your list.
+                </span>
+              </p>
+            ) : null}
+            {blockFindings.length || warnFindings.length || otherFindings.length ? (
             <ul className="mt-3 space-y-2">
               {[...blockFindings, ...warnFindings, ...otherFindings].map((f, i) => (
                 <li key={`${f.code}-${i}`} className="flex items-start gap-2 text-sm">
@@ -194,6 +213,7 @@ export function RequestSheet({ view, request, open, onOpenChange }: RequestSheet
                 </li>
               ))}
             </ul>
+            ) : null}
           </div>
         ) : null}
 

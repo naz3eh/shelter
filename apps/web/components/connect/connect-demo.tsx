@@ -24,6 +24,7 @@ import { ConnectGraph } from "./connect-graph";
 import { FundingTimeline } from "./funding-timeline";
 import { ConnectVerified } from "./connect-verified";
 import { LinkagePanel } from "./linkage-panel";
+import { requestListLabel } from "@/lib/request-decode";
 import { BottomSheet } from "@/components/motion/bottom-sheet";
 import { Btn, Pill, Reveal, SectionTitle } from "./primitives";
 import { cn } from "@/lib/utils";
@@ -203,6 +204,22 @@ export function ConnectDemo() {
     };
     window.addEventListener("shelter:try-it", onTry);
     return () => window.removeEventListener("shelter:try-it", onTry);
+  }, [views, openRequest]);
+
+  // "Try an allowed request" opens the sheet on the sent contract call from
+  // the recording (the dapp transaction that was allowed, not the approval).
+  useEffect(() => {
+    const onAllowed = () => {
+      const sent = Object.values(views)
+        .flatMap((v) => v.account.requests)
+        .filter((r) => r.decision === "sent" && r.method === "eth_sendTransaction" && r.tx);
+      const contractCall = sent.filter((r) => requestListLabel(r).startsWith("Contract call"));
+      const pick = contractCall.at(-1) ?? sent.at(-1);
+      if (pick) openRequest(pick);
+      else document.getElementById("connect-demo")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+    window.addEventListener("shelter:try-allowed", onAllowed);
+    return () => window.removeEventListener("shelter:try-allowed", onAllowed);
   }, [views, openRequest]);
 
   const view = selectedId ? views[selectedId] : undefined;

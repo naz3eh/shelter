@@ -76,6 +76,17 @@ async function run(prefix, width, height) {
   await page.keyboard.press("Escape");
   await page.waitForTimeout(600);
 
+  // --- Try an allowed request opens the sent contract call's sheet ---
+  await page.getByRole("button", { name: "Try an allowed request" }).first().click();
+  await page.waitForSelector("text=Allowed by Shelter", { timeout: 5000 });
+  results.checks.allowedSheetOpens = true;
+  await page.waitForTimeout(900);
+  await page.screenshot({ path: `${OUT}${prefix}-09-allowed.png` });
+  const axeAllowed = await new AxeBuilder({ page }).analyze();
+  results.axe.allowed = axeAllowed.violations.filter((v) => ["serious", "critical"].includes(v.impact ?? ""));
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(600);
+
   // --- section screenshots ---
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.waitForTimeout(400);

@@ -4,16 +4,22 @@
  * The verified panel for a recorded Connect session: every check is computed
  * from the recording (1Click quote signatures, NEP-413 withdrawal signatures,
  * dapp-signed transactions, sweep deposits, linkage re-checks), each with its
- * Basescan link where one exists. The NEAR AI TEE attestation panel stays
- * below for the explainer.
+ * Basescan link where one exists. Checks are grouped by funding leg, request
+ * and sweep; each group expands to its individual checks. The NEAR AI TEE
+ * attestation panel stays below for the explainer.
  */
 
 import { useEffect, useMemo, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { CircleCheck, CircleX, ShieldCheck } from "lucide-react";
+import { ChevronRight, CircleCheck, CircleX, ShieldCheck } from "lucide-react";
 import type { ConnectAccountView } from "@/lib/connect-source";
 import { verifySession, type VerifyCheck } from "@/lib/connect-verify";
 import { VerifiedPanel } from "@/components/verified-panel";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/motion/collapsible";
 import { Pill, Reveal, SectionTitle, TxChip } from "./primitives";
 import { cn } from "@/lib/utils";
 import { BASESCAN_TX } from "@/lib/connect-format";
@@ -50,6 +56,71 @@ function CheckItem({ check }: { check: VerifyCheck }) {
   );
 }
 
+interface CheckGroup {
+  name: string;
+  checks: VerifyCheck[];
+}
+
+/** Group checks by what they verify: funding leg, request, or sweep. */
+function groupChecks(checks: VerifyCheck[]): CheckGroup[] {
+  const groups = new Map<string, VerifyCheck[]>();
+  for (const c of checks) {
+    const m =
+      c.label.match(/^funding (gas[^:]*|asset):/) ??
+      c.label.match(/^request (\d+)/) ??
+      c.label.match(/^sweep ([^:]+):/);
+    let name: string;
+    if (m) {
+      if (c.label.startsWith("funding ")) {
+        name = m[1] === "asset" ? "Funding asset" : "Funding gas";
+      } else if (c.label.startsWith("request ")) {
+        name = `Request ${m[1]}`;
+      } else {
+        name = `Sweep ${m[1]}`;
+      }
+    } else {
+      name = "Other";
+    }
+    const list = groups.get(name) ?? [];
+    list.push(c);
+    groups.set(name, list);
+  }
+  return [...groups.entries()].map(([name, list]) => ({ name, checks: list }));
+}
+
+function GroupRow({ group }: { group: CheckGroup }) {
+  const pass = group.checks.filter((c) => c.status === "pass").length;
+  const allPass = pass === group.checks.length;
+  return (
+    <Collapsible>
+      <CollapsibleTrigger className="group/row rounded-lg px-3 py-2.5 hover:bg-muted/40">
+        <ChevronRight
+          className="size-4 shrink-0 text-faint transition-transform group-data-[state=open]/row:rotate-90"
+          aria-hidden
+        />
+        <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+          {group.name}
+        </span>
+        <span className="font-mono text-xs tabular-nums text-faint">
+          {pass}/{group.checks.length}
+        </span>
+        {allPass ? (
+          <CircleCheck className="size-4 shrink-0 text-shelter" aria-hidden />
+        ) : (
+          <CircleX className="size-4 shrink-0 text-destructive" aria-hidden />
+        )}
+      </CollapsibleTrigger>
+      <CollapsibleContent contentClassName="px-3 pb-2">
+        <ul className="divide-y divide-border/60">
+          {group.checks.map((c) => (
+            <CheckItem key={c.id} check={c} />
+          ))}
+        </ul>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
 export function ConnectVerified({ view }: { view: ConnectAccountView }) {
   const reduce = useReducedMotion();
   const [checks, setChecks] = useState<VerifyCheck[] | null>(null);
@@ -72,9 +143,7 @@ export function ConnectVerified({ view }: { view: ConnectAccountView }) {
   const passCount = useMemo(() => checks?.filter((c) => c.status === "pass").length ?? 0, [checks]);
   const total = checks?.length ?? 0;
   const allPass = checks !== null && passCount === total && total > 0;
-  const mid = Math.ceil((checks?.length ?? 0) / 2);
-  const left = checks?.slice(0, mid) ?? [];
-  const right = checks?.slice(mid) ?? [];
+  const groups = useMemo(() => (checks ? groupChecks(checks) : []), [checks]);
 
   return (
     <Reveal>
@@ -102,18 +171,11 @@ export function ConnectVerified({ view }: { view: ConnectAccountView }) {
             initial={reduce ? false : { opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
-            className="grid gap-x-8 px-5 py-3 md:grid-cols-2"
+            className="px-2 py-2"
           >
-            <ul className="divide-y divide-border/60">
-              {left.map((c) => (
-                <CheckItem key={c.id} check={c} />
-              ))}
-            </ul>
-            <ul className="divide-y divide-border/60">
-              {right.map((c) => (
-                <CheckItem key={c.id} check={c} />
-              ))}
-            </ul>
+            {groups.map((g) => (
+              <GroupRow key={g.name} group={g} />
+            ))}
           </motion.div>
         ) : failed ? (
           <p className="px-5 py-4 text-sm text-destructive">Could not verify the recording.</p>
