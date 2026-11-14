@@ -3,14 +3,18 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "next dev --webpack",
+    "build": "next build --webpack",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@shelter/attest": "workspace:*",
+    "@shelter/burner": "workspace:*",
+    "@shelter/connect": "workspace:*",
     "@shelter/core": "workspace:*",
+    "@shelter/intents": "workspace:*",
     "clsx": "^2.1.1",
     "lucide-react": "^1.68.0",
     "motion": "^14.9.1",
@@ -18,14 +22,23 @@
     "openai": "7.45.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "tailwind-merge": "^3.7.0"
+    "tailwind-merge": "^3.7.0",
+    "viem": "^2.57.11"
   },
   "devDependencies": {
+    "@noble/curves": "^2.4.0",
+    "@noble/hashes": "^2.4.0",
+    "@scure/base": "^2.4.0",
     "@tailwindcss/postcss": "^4.1.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.3",
     "@types/node": "^24.19.2",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
+    "jsdom": "^26.1.0",
     "tailwindcss": "^4.1.0",
-    "typescript": "~5.9.3"
+    "tsx": "^4.23.15",
+    "typescript": "~5.9.3",
+    "vitest": "^3.2.7"
   }
 }

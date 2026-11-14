@@ -1,8 +1,8 @@
 # Status
 
-**2026-11-13 UTC**
+**2026-11-14 UTC**
 
-Backend session, branch `feat/connect`, open as PR #10 (not merged).
+Backend session, branch `feat/connect`: PR #10 merged into `main` (`545f24f`); PR #11 (the web demo) merged into `feat/connect` (`6a9fe1e`), with `feat/connect` → `main` pending.
 PRs #4 to #9 (G4, G5, G6, G9 and docs) are merged into `main`.
 New this session: **Shelter Connect** (`packages/connect`), the confidential balance usable in any dapp over WalletConnect, one unlinked address per dapp.
 
@@ -17,6 +17,7 @@ New this session: **Shelter Connect** (`packages/connect`), the confidential bal
 - Added after it: the running wallet takes pasted `wc:` links (`wc link>` prompt; tested over the real relay with a WalletConnect dapp client); `near balance`; request records keep the dapp's params; `demo record --connect` and a replay that re-checks Connect sessions offline (today's run: 28 checks pass; tampered copies fail); the replay now binds quote fields to their signed response and reports malformed signatures instead of crashing; README judge path and NEAR section; threat model limits.
 
 - Review fixes (2026-11-13, PR #10 review): the linkage check also reads NEAR ids as UTF-16 and hex text, addresses written as text inside calldata, and bytes values in typed data (split or obfuscated identities are a documented limit); the sweep approval lists unlisted tokens the address received; a pasted `wc:` link during a question pairs instead of declining; a missing Verify origin no longer passes the origin check; `docs/HACKATHON.md` refreshed from the live file; README judge step 4 runnable today.
+- Web demo (`apps/web`, PR #11, merged into `feat/connect`): recorded-session replay of the 2026-11-12 Uniswap run — the blocked send, before/after link graph, funding timeline, offline verified panel (29/29 real checks) and the NEAR AI TEE attestation panel. The fixture is the real recording (`scripts/demo/recording.json`) with the linked main wallet swapped for a demo address; the NEAR owner stays `viraz.near` because the NEP-413 and sweep quotes are signed over it.
 
 Previous update (2026-11-09): G4.2 Meteor-owned confidential balance, G6 burner engine, G9 recording and replay.
 
@@ -32,7 +33,7 @@ Previous update (2026-11-09): G4.2 Meteor-owned confidential balance, G6 burner 
 | G6 Burner engine | done (merged, PR #7; `fund` action local) | `packages/burner`: resumable jobs for burner actions and private-move payouts, scheduled starts, planner hand-off (`schedulePlan`), memory/SQLite/IndexedDB stores, Base client with L1 fee; CLI `vault` (incl. `recover`) and `burner` (`preview`, `new`, `payout`, `run`, ...). Live read-only run up to the first approval; 33 offline tests incl. crash matrices for both job kinds (mutation-checked). Not yet: mainnet run. See `docs/backend/BURNER.md` |
 | G7 NEAR AI explainer + Verified panel | **done** | live run 2026-11-06T07:07Z by the human: `pnpm --filter @shelter/cli explain --sample exposed` - real Intel TDX DCAP quotes verified, TCB UpToDate, nonce / RTMR3 / app_compose / response-signature checks all passed; code merged in PR #2 (`f8c1959`) |
 | G8 Web screens | in progress | Verified panel on `/`; other screens not started |
-| G9 `pnpm demo --dry-run` | done (merged, PR #8), waiting for the recording | Recorder (`demo record`, deposits saved by `near deposit`) and offline replay that re-verifies quote, NEP-413 and transaction signatures; tested on a real partial run and a tampered copy. Waiting for the recorded mainnet run |
+| G9 `pnpm demo --dry-run` | done; recording committed 2026-11-14 | Recorder (`demo record`, deposits saved by `near deposit`) and offline replay that re-verifies quote, NEP-413 and transaction signatures; tested on a real partial run and a tampered copy. `scripts/demo/recording.json` is the 2026-11-12 funded Connect run: 28 checks pass, tampered copies fail |
 | G10 README / LICENSE / threat model | in progress | README corrected (98.5, hashed fixture keys); threat model AI section and Intents client section added; other sections pending |
 | G11 Hosted demo | not started | - |
 | Shelter Connect | done, live funded run on mainnet 2026-11-12 (local, unreviewed) | `packages/connect`: per-dapp accounts, linkage check, WalletConnect bridge (Reown WalletKit), just-in-time funding through burner `fund` jobs, sweep and retire; 61 offline tests incl. a close crash matrix and the broken-engine run that proves it bites. Live: paired with a real dapp, signatures and a linkage block verified. Live: funded Uniswap session, block and close on mainnet. See `docs/backend/CONNECT.md` |
@@ -47,12 +48,12 @@ Run 2026-11-13 on Node 26.12.1:
 - `pnpm install --frozen-lockfile` - clean
 - `pnpm -r typecheck` - 8 projects pass
 - `pnpm build` - passes (Next production build)
-- `pnpm -r test` - 356 tests pass (core 31, intents 146, keys 50, burner 42, connect 74, attest 13), no network calls
+- `pnpm -r test` - 355 tests pass (core 31, intents 146, keys 50, burner 42, connect 61, attest 13, web 12), no network calls
 - `connect link add/list/remove` and `connect list` run end to end against a scratch `SHELTER_HOME`; WalletKit initializes in Node in about 0.3 s
 
 ## Open PRs
 
-PR #10 (`feat/connect`, Shelter Connect): changes requested on 2026-11-13; review fixes pushed, waiting for re-review. PRs #4 to #9 are merged.
+PR #10 (`feat/connect`, Shelter Connect) merged into `main`. PR #11 (`feat/web-connect`, the recorded-session web demo) merged into `feat/connect`; the open PR is `feat/connect` → `main`. PRs #4 to #9 are merged.
 
 ## Blockers / what I need from a human
 
@@ -62,9 +63,9 @@ PR #10 (`feat/connect`, Shelter Connect): changes requested on 2026-11-13; revie
 
 ## Next 3 tasks
 
-1. Decide whether to publish a recording (today's run, or a fresh one under a demo identity), then commit it to `scripts/demo/`.
+1. ~~Decide whether to publish a recording~~ done 2026-11-14: `scripts/demo/recording.json` committed (the 2026-11-12 run; names viraz.near and the linked main wallet, both already public).
 2. The burner payout mainnet run (human signs; about 0.3 USDC).
-3. Web UI for Connect and the submission (see the PR description).
+3. ~~Web UI for Connect~~ done 2026-11-14 via PR #11; remaining: `feat/connect` → `main`, hosted demo, video and submission.
 
 ## Interface changes
 
