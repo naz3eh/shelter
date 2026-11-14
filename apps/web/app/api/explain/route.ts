@@ -16,7 +16,7 @@ const TX_HASH = /\b0x?[0-9a-fA-F]{64}\b/;
 
 /**
  * Stateless explainer call: the browser sends an already-redacted scan
- * (addresses are Wallet/Counterparty aliases, no tx hashes — enforced below),
+ * (addresses are Wallet/Counterparty aliases, no tx hashes, enforced below),
  * we relay it to NEAR AI Cloud's TEE model and return the answer plus the
  * exact request/response bytes and the response signature so the browser can
  * verify everything itself. No request bodies are logged or stored.
@@ -60,7 +60,7 @@ export async function POST(req: Request) {
     );
   }
 
-  // Wrap fetch so the exact bytes openai sends/receives are kept — the
+  // Wrap fetch so the exact bytes openai sends/receives are kept, the
   // response signature covers these hashes, and the client checks them.
   let requestBody = "";
   let responseBody = "";
@@ -104,7 +104,7 @@ export async function POST(req: Request) {
 
   // The signature can lag the completion by a beat; fetch with the bounded
   // retry built into the helper. An unavailable signature means the client
-  // marks the answer unverified — it is still returned.
+  // marks the answer unverified, it is still returned.
   let signature = null;
   try {
     signature = await fetchResponseSignature({

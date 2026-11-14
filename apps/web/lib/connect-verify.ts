@@ -6,8 +6,8 @@
  * - 1Click quote signatures against 1Click's own published key (the default
  *   in `verifyQuoteSignature`), and the mapped fields against the signed
  *   wire response;
- * - NEP-413 withdrawal signatures against the key recorded with them —
- *   offline we can only say the signature matches that key, not who owns it —
+ * - NEP-413 withdrawal signatures against the key recorded with them,
+ *   offline we can only say the signature matches that key, not who owns it,
  *   and that each intent only pays the quote's deposit address from the
  *   owner's account;
  * - dapp transactions: hash is the keccak of the signed bytes, the sender

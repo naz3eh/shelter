@@ -8,8 +8,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { motion, useReducedMotion } from "motion/react";
-import { CircleDot, History, Link2, ShieldCheck } from "lucide-react";
+import { LayoutGrid, Link2, ShieldCheck } from "lucide-react";
 import type { ConnectAccount, RequestRecord } from "@shelter/connect";
 import {
   connectSource,
@@ -18,7 +17,7 @@ import {
 } from "@/lib/connect-source";
 import { DappCard } from "./dapp-card";
 import { CopyableHash } from "./copyable-hash";
-import { BASESCAN_TX, formatToken } from "@/lib/connect-format";
+import { BASESCAN_TX, formatToken, shortAddress } from "@/lib/connect-format";
 import { RequestRow } from "./request-row";
 import { RequestSheet } from "./request-sheet";
 import { ConnectGraph } from "./connect-graph";
@@ -26,29 +25,8 @@ import { FundingTimeline } from "./funding-timeline";
 import { ConnectVerified } from "./connect-verified";
 import { LinkagePanel } from "./linkage-panel";
 import { BottomSheet } from "@/components/motion/bottom-sheet";
+import { Btn, Pill, Reveal, SectionTitle } from "./primitives";
 import { cn } from "@/lib/utils";
-
-function Section({
-  id,
-  icon: Icon,
-  title,
-  children,
-}: {
-  id: string;
-  icon: typeof Link2;
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section id={id} className="flex scroll-mt-24 flex-col gap-4">
-      <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground">
-        <Icon className="h-5 w-5 text-muted-foreground" aria-hidden />
-        {title}
-      </h2>
-      {children}
-    </section>
-  );
-}
 
 function PairSheet({
   open,
@@ -79,13 +57,13 @@ function PairSheet({
           rows={3}
           placeholder="wc:…"
           className={cn(
-            "w-full rounded-lg border border-border bg-muted/50 px-3 py-2 font-mono text-xs text-foreground",
-            "placeholder:text-muted-foreground/60",
-            "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+            "w-full rounded-lg border border-input bg-background/60 px-3 py-2 font-mono text-xs text-foreground",
+            "placeholder:text-faint/70",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
           )}
         />
         {mode === "replay" ? (
-          <p className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+          <p className="rounded-lg border border-border bg-surface/60 px-3 py-2 text-sm text-muted-foreground">
             Pairing needs the live wallet: it derives a fresh address for the dapp and
             funds it from your confidential balance. This page is replaying a recorded
             session, so there is nothing to pair with. The recorded Uniswap session
@@ -97,13 +75,9 @@ function PairSheet({
             from packages/connect.
           </p>
         )}
-        <button
-          type="button"
-          disabled
-          className="rounded-lg border border-border bg-muted px-3 py-2 text-sm font-medium text-muted-foreground opacity-60"
-        >
+        <Btn disabled className="opacity-60">
           {mode === "replay" ? "Pairing needs the live wallet" : "Live wallet not available"}
-        </button>
+        </Btn>
       </div>
     </BottomSheet>
   );
@@ -129,23 +103,23 @@ function CloseSheet({
       onOpenChange={onOpenChange}
       snapPoints={["auto"]}
       title="Close and sweep back"
-      description={account ? `${account.dapp.origin} · ${account.address.address.slice(0, 6)}…${account.address.address.slice(-4)}` : undefined}
+      description={account ? `${account.dapp.origin} · ${shortAddress(account.address.address)}` : undefined}
     >
       <div className="flex flex-col gap-3 text-sm">
         {account?.status === "closed" ? (
-          <p className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-emerald-200">
+          <p className="rounded-lg border border-shelter/30 bg-shelter/10 px-3 py-2 text-shelter">
             This recorded session already ran close: every token and the ETH balance
             went back to the confidential balance through 1Click, and the dapp
             address is retired.
           </p>
         ) : mode === "replay" ? (
-          <p className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-muted-foreground">
+          <p className="rounded-lg border border-border bg-surface/60 px-3 py-2 text-muted-foreground">
             Closing needs the live wallet: it sweeps the dapp address&apos; balances
             back into the confidential balance and retires the address. This page is
             replaying a recorded session.
           </p>
         ) : (
-          <p className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-muted-foreground">
+          <p className="rounded-lg border border-border bg-surface/60 px-3 py-2 text-muted-foreground">
             Live close is not in this build yet; it needs the browser wallet entry
             from packages/connect.
           </p>
@@ -177,7 +151,6 @@ function CloseSheet({
 }
 
 export function ConnectDemo() {
-  const reduce = useReducedMotion();
   const source: ConnectSource = useMemo(() => connectSource(), []);
   const [accounts, setAccounts] = useState<ConnectAccount[] | null>(null);
   const [views, setViews] = useState<Record<string, ConnectAccountView>>({});
@@ -239,25 +212,25 @@ export function ConnectDemo() {
   );
 
   return (
-    <div id="connect-demo" className="flex scroll-mt-20 flex-col gap-10">
-      <header className="flex flex-col gap-2">
-        <div className="flex flex-wrap items-center gap-3">
-          <h2 className="text-2xl font-semibold tracking-tight text-foreground">Shelter Connect</h2>
-          <span className="rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+    <div id="connect-demo" className="flex scroll-mt-20 flex-col gap-24">
+      <Reveal>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <h2 className="text-2xl font-semibold tracking-tight">Shelter Connect</h2>
+          <Pill className="border-foreground/20 bg-foreground/5 text-foreground" dot>
             {source.mode === "replay" ? "Recorded session" : "Live wallet"}
-          </span>
+          </Pill>
           {blockedCount ? (
-            <span className="rounded-full border border-destructive/40 bg-destructive/10 px-3 py-1 text-xs font-medium text-red-300">
+            <Pill tone="danger">
               {blockedCount} request{blockedCount === 1 ? "" : "s"} blocked
-            </span>
+            </Pill>
           ) : null}
         </div>
-        <p className="max-w-2xl text-sm text-muted-foreground">
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
           Each dapp gets its own Base address, funded from the confidential balance
           through 1Click. Requests that would link it to your other wallets are
           blocked. Closing sweeps the funds back.
         </p>
-      </header>
+      </Reveal>
 
       {error ? (
         <p role="alert" className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-foreground">
@@ -270,8 +243,9 @@ export function ConnectDemo() {
       ) : null}
 
       {accounts?.length ? (
-        <Section id="connect-dapps" icon={CircleDot} title="Dapps">
-          <ul className="grid gap-3 lg:grid-cols-2">
+        <Reveal>
+          <SectionTitle icon={<LayoutGrid />} title="Dapps" />
+          <ul className="grid gap-4 md:grid-cols-2">
             {accounts.map((a) => (
               <DappCard
                 key={a.id}
@@ -290,40 +264,32 @@ export function ConnectDemo() {
           </ul>
           <PairSheet open={pairOpen} onOpenChange={setPairOpen} mode={source.mode} />
           <CloseSheet view={closeView} open={closeOpen} onOpenChange={setCloseOpen} mode={source.mode} />
-        </Section>
+        </Reveal>
       ) : null}
 
       {view ? (
-        <Section id="connect-requests" icon={ShieldCheck} title="Requests">
-          <p className="text-sm text-muted-foreground">
-            What {view.account.dapp.name ?? view.account.dapp.origin} asked for, and what
-            Shelter decided. Open the blocked one to see the approval sheet.
-          </p>
-          <ul className="flex flex-col gap-2">
+        <Reveal>
+          <SectionTitle
+            icon={<ShieldCheck />}
+            title="Requests"
+            sub={`What ${view.account.dapp.name ?? view.account.dapp.origin} asked for, and what Shelter decided. Open the blocked one to see the approval sheet.`}
+          />
+          <ul className="space-y-2">
             {view.account.requests.map((r) => (
               <RequestRow key={r.seq} request={r} onOpen={() => openRequest(r)} />
             ))}
           </ul>
-        </Section>
+        </Reveal>
       ) : null}
 
-      {view ? (
-        <motion.div
-          initial={reduce ? false : { opacity: 0, y: 12 }}
-          whileInView={reduce ? undefined : { opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.4 }}
-        >
-          <ConnectGraph view={view} />
-        </motion.div>
-      ) : null}
-
+      {view ? <ConnectGraph view={view} /> : null}
       {view ? <FundingTimeline view={view} /> : null}
       {view ? <ConnectVerified view={view} /> : null}
 
-      <Section id="connect-linkage" icon={Link2} title="Try the linkage check">
+      <Reveal>
+        <SectionTitle icon={<Link2 />} title="Try the linkage check" />
         <LinkagePanel />
-      </Section>
+      </Reveal>
 
       {view ? (
         <RequestSheet

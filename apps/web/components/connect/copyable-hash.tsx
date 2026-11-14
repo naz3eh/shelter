@@ -5,7 +5,7 @@ import { Check, Copy, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
- * A shortened hash/address with a copy button and an explorer link — the
+ * A shortened hash/address with a copy button and an explorer link: the
  * spec for every machine identifier on the Connect screens.
  */
 export function CopyableHash({
@@ -23,25 +23,26 @@ export function CopyableHash({
   const [copied, setCopied] = useState(false);
   const short = value.length > 14 ? `${value.slice(0, 10)}…${value.slice(-6)}` : value;
   return (
-    <span className={cn("inline-flex items-center gap-1.5", className)}>
+    <span className={cn("inline-flex items-center gap-0.5 whitespace-nowrap rounded-md border bg-surface-2/60 py-px pl-1.5 pr-0.5 align-middle font-mono text-[11px] text-muted-foreground", className)}>
       {href ? (
         <a
           href={href}
           target="_blank"
           rel="noreferrer"
-          className="font-mono text-foreground underline underline-offset-2"
+          className="inline-flex items-center gap-0.5 text-foreground hover:text-foreground"
           aria-label={`Open ${short} on Basescan`}
         >
           {short}
-          <ExternalLink className="ml-0.5 inline h-3 w-3" aria-hidden />
+          <ExternalLink className="size-3" aria-hidden />
         </a>
       ) : (
-        <code className="font-mono text-foreground">{short}</code>
+        <span className="text-foreground">{short}</span>
       )}
       <button
         type="button"
         aria-label={label}
-        onClick={async () => {
+        onClick={async (e) => {
+          e.stopPropagation();
           try {
             await navigator.clipboard.writeText(value);
           } catch {
@@ -55,18 +56,18 @@ export function CopyableHash({
             ta.remove();
           }
           setCopied(true);
-          setTimeout(() => setCopied(false), 1500);
+          setTimeout(() => setCopied(false), 1200);
         }}
         className={cn(
-          "inline-flex h-5 w-5 items-center justify-center rounded border border-border text-muted-foreground",
-          "transition-colors hover:border-border-strong hover:text-foreground",
-          "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+          "inline-grid size-5 shrink-0 place-items-center rounded text-faint",
+          "transition-colors hover:bg-accent hover:text-foreground",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         )}
       >
         {copied ? (
-          <Check className="h-3 w-3 text-emerald-400" aria-hidden />
+          <Check className="size-3 text-shelter" aria-hidden />
         ) : (
-          <Copy className="h-3 w-3" aria-hidden />
+          <Copy className="size-3" aria-hidden />
         )}
       </button>
     </span>
