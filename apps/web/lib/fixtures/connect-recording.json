@@ -1,0 +1,857 @@
+{
+  "format": "shelter-demo-recording",
+  "v": 1,
+  "recordedAt": "2026-11-14T13:10:10.071Z",
+  "network": "mainnet",
+  "owner": "viraz.near",
+  "deposits": [],
+  "burners": [
+    {
+      "v": 1,
+      "id": "bj_0d085edcbc9a91c6",
+      "createdAt": "2026-11-12T16:35:19.733Z",
+      "updatedAt": "2026-11-12T16:36:51.195Z",
+      "status": "done",
+      "step": "done",
+      "owner": "viraz.near",
+      "chain": "base",
+      "action": {
+        "kind": "fund",
+        "target": {
+          "index": 0,
+          "address": "0xe5bdd0651273B78B536fa027031aB65301d3FF9b"
+        },
+        "asset": "usdc",
+        "amount": "1000000",
+        "gasWei": "21000000000000",
+        "payWith": "usdc"
+      },
+      "gas": [
+        {
+          "asset": "eth",
+          "payWith": "usdc",
+          "amount": "21000000000000",
+          "attempts": [
+            {
+              "quote": {
+                "quoteId": "4a2700bd-f4af-427c-8da3-510da644e782",
+                "dry": false,
+                "depositAddress": "c121287ed6b49414645848c12a8c646d0a10b8b9fb12991e9a411ae6eb5b43e9",
+                "amountIn": "44813",
+                "minAmountIn": "44588",
+                "amountOut": "21000000000000",
+                "minAmountOut": "21000000000000",
+                "amountInUsd": "0.044792027516",
+                "amountOutUsd": "0.042185220000",
+                "deadline": "2026-11-12T17:05:20.419Z",
+                "timeWhenInactive": "2026-11-15T17:05:20.419Z",
+                "timeEstimateSec": 14,
+                "withdrawFee": "1120000000000",
+                "refundFee": "0",
+                "confidentiality": "advanced",
+                "request": {
+                  "originAssetId": "nep141:base-0x833589fcd6edb6e08f4c7c32d4f71b54bda02913.omft.near",
+                  "destinationAssetId": "nep141:base.omft.near",
+                  "swapType": "EXACT_OUTPUT",
+                  "amount": "21000000000000",
+                  "depositType": "CONFIDENTIAL_INTENTS",
+                  "recipient": "0xe5bdd0651273B78B536fa027031aB65301d3FF9b",
+                  "recipientType": "DESTINATION_CHAIN",
+                  "refundTo": "viraz.near",
+                  "refundType": "CONFIDENTIAL_INTENTS",
+                  "slippageBps": 50,
+                  "confidentiality": "advanced",
+                  "dry": false,
+                  "deadline": "2026-11-12T17:05:20.419Z"
+                },
+                "provenance": {
+                  "correlationId": "4a2700bd-f4af-427c-8da3-510da644e782",
+                  "timestamp": "2026-11-12T16:35:21.809Z",
+                  "signature": "ed25519:5UHv24EonTxvzcJpFgqNgAt1n1QKYQMmRGHMbzDkomCTbTLoVTsFZXJfLb2mKkawYPKtCZz3iRpzMNrp9g1pxXaM",
+                  "signatureVerified": true,
+                  "signerPublicKey": "ed25519:reYaWhvwu8Jzo3WUM3zhn6VrhuMEF4eADL17qtRVifc"
+                },
+                "wire": {
+                  "correlationId": "4a2700bd-f4af-427c-8da3-510da644e782",
+                  "timestamp": "2026-11-12T16:35:21.809Z",
+                  "signature": "ed25519:5UHv24EonTxvzcJpFgqNgAt1n1QKYQMmRGHMbzDkomCTbTLoVTsFZXJfLb2mKkawYPKtCZz3iRpzMNrp9g1pxXaM",
+                  "quoteRequest": {
+                    "dry": false,
+                    "swapType": "EXACT_OUTPUT",
+                    "slippageTolerance": 50,
+                    "originAsset": "nep141:base-0x833589fcd6edb6e08f4c7c32d4f71b54bda02913.omft.near",
+                    "depositType": "CONFIDENTIAL_INTENTS",
+                    "destinationAsset": "nep141:base.omft.near",
+                    "amount": "21000000000000",
+                    "refundTo": "viraz.near",
+                    "refundType": "CONFIDENTIAL_INTENTS",
+                    "recipient": "0xe5bdd0651273B78B536fa027031aB65301d3FF9b",
+                    "recipientType": "DESTINATION_CHAIN",
+                    "deadline": "2026-11-12T17:05:20.419Z",
+                    "confidentiality": "advanced",
+                    "quoteWaitingTimeMs": 0,
+                    "depositMode": "SIMPLE",
+                    "insured": false,
+                    "appFees": [
+                      {
+                        "recipient": "2238fd089f1c92b206c218cd16b8676cb98964e0d50f8ab729c6396a81e07805",
+                        "fee": 20,
+                        "limitOrderId": null
+                      }
+                    ]
+                  },
+                  "quote": {
+                    "depositAddress": "c121287ed6b49414645848c12a8c646d0a10b8b9fb12991e9a411ae6eb5b43e9",
+                    "amountIn": "44813",
+                    "amountInFormatted": "0.044813",
+                    "amountInUsd": "0.044792027516",
+                    "minAmountIn": "44588",
+                    "amountOut": "21000000000000",
+                    "amountOutFormatted": "0.000021",
+                    "amountOutUsd": "0.042185220000",
+                    "minAmountOut": "21000000000000",
+                    "deadline": "2026-11-15T17:05:20.419Z",
+                    "timeWhenInactive": "2026-11-15T17:05:20.419Z",
+                    "timeEstimate": 14,
+                    "refundFee": "0",
+                    "withdrawFee": "1120000000000"
+                  }
+                }
+              },
+              "prepared": {
+                "depositAddress": "c121287ed6b49414645848c12a8c646d0a10b8b9fb12991e9a411ae6eb5b43e9",
+                "signedData": {
+                  "standard": "nep413",
+                  "payload": {
+                    "message": "{\"deadline\":\"2026-11-15T17:05:20.419Z\",\"intents\":[{\"intent\":\"transfer\",\"receiver_id\":\"c121287ed6b49414645848c12a8c646d0a10b8b9fb12991e9a411ae6eb5b43e9\",\"tokens\":{\"imt:51e8f94d77b5e90dc9852ca6113771e11e8382ce69473a75e313e41665de7cbe:nep141:base-0x833589fcd6edb6e08f4c7c32d4f71b54bda02913.omft.near\":\"44813\"}}],\"signer_id\":\"viraz.near\"}",
+                    "nonce": "Vij2xgDhEPMXwI7URNJG6Bh7MybpxxHg2BL9r77kDJY=",
+                    "recipient": "intents.far"
+                  },
+                  "public_key": "ed25519:CnZuF2WbnRJn1SSYRgVF6vKZd3pQnjcn87JZM28GULNH",
+                  "signature": "ed25519:4KJqGrR1gxjpMsvz7yXDDBBfteH7uGgpztYggTVgFxTrU46Lkoia7iPyb62Q6wfaox583K7KumAsNyJBDHo3aVzY"
+                },
+                "summary": {
+                  "signerId": "viraz.near",
+                  "deadline": "2026-11-15T17:05:20.419Z",
+                  "transfers": [
+                    {
+                      "receiverId": "c121287ed6b49414645848c12a8c646d0a10b8b9fb12991e9a411ae6eb5b43e9",
+                      "tokenId": "imt:51e8f94d77b5e90dc9852ca6113771e11e8382ce69473a75e313e41665de7cbe:nep141:base-0x833589fcd6edb6e08f4c7c32d4f71b54bda02913.omft.near",
+                      "amount": "44813"
+                    }
+                  ]
+                },
+                "deadline": "2026-11-15T17:05:20.419Z",
+                "quoteDeadline": "2026-11-12T17:05:20.419Z"
+              },
+              "submitted": {
+                "intentHash": "3Uwx3d42sgnosdcgvSuaycjgJqP5ZyGiLDG3w45j75sQ",
+                "correlationId": "6424c644-6f48-4d21-8c6a-3e6d2211dcb6",
+                "at": "2026-11-12T16:35:32.387Z"
+              },
+              "status": "SUCCESS",
+              "statusAt": "2026-11-12T16:35:59.558Z",
+              "outcome": "delivered"
+            }
+          ],
+          "balanceBefore": "0",
+          "confirmedBalance": "21000000000000"
+        }
+      ],
+      "events": [
+        {
+          "at": "2026-11-12T16:35:19.733Z",
+          "step": "allocate",
+          "message": "created: top up 0xe5bdd0651273B78B536fa027031aB65301d3FF9b with 1 USDC and 0.000021 ETH for gas, paid in USDC"
+        },
+        {
+          "at": "2026-11-12T16:35:20.174Z",
+          "step": "fund_gas",
+          "message": "topping up 0xe5bdd0651273B78B536fa027031aB65301d3FF9b (index 0)"
+        },
+        {
+          "at": "2026-11-12T16:35:22.565Z",
+          "step": "fund_gas",
+          "message": "gas: quote 4a2700bd-f4af-427c-8da3-510da644e782, 0.044813 USDC in for 0.000021 ETH out, deposit address c121287ed6b49414645848c12a8c646d0a10b8b9fb12991e9a411ae6eb5b43e9"
+        },
+        {
+          "at": "2026-11-12T16:35:31.754Z",
+          "step": "fund_gas",
+          "message": "gas: intent signed; quote deadline 2026-11-12T17:05:20.419Z"
+        },
+        {
+          "at": "2026-11-12T16:35:32.387Z",
+          "step": "fund_gas",
+          "message": "gas: intent submitted, hash 3Uwx3d42sgnosdcgvSuaycjgJqP5ZyGiLDG3w45j75sQ"
+        },
+        {
+          "at": "2026-11-12T16:35:32.659Z",
+          "step": "fund_gas",
+          "message": "1Click status PENDING_DEPOSIT for c121287ed6b49414645848c12a8c646d0a10b8b9fb12991e9a411ae6eb5b43e9"
+        },
+        {
+          "at": "2026-11-12T16:35:38.075Z",
+          "step": "fund_gas",
+          "message": "1Click status PROCESSING for c121287ed6b49414645848c12a8c646d0a10b8b9fb12991e9a411ae6eb5b43e9"
+        },
+        {
+          "at": "2026-11-12T16:35:59.558Z",
+          "step": "fund_gas",
+          "message": "1Click status SUCCESS for c121287ed6b49414645848c12a8c646d0a10b8b9fb12991e9a411ae6eb5b43e9"
+        },
+        {
+          "at": "2026-11-12T16:35:59.558Z",
+          "step": "fund_gas",
+          "message": "gas: 1Click reports delivered"
+        },
+        {
+          "at": "2026-11-12T16:35:59.863Z",
+          "step": "fund_gas",
+          "message": "gas: burner balance 21000000000000 confirmed on chain"
+        },
+        {
+          "at": "2026-11-12T16:36:00.984Z",
+          "step": "fund_asset",
+          "message": "asset: quote c90e4a3d-1a28-413e-bcda-2e351b13d445, 1.00985 USDC in for 1 USDC out, deposit address c1f337442cfde10b653ea6bc4f9f81db4662bd6af97b332484ab04eab035edea"
+        },
+        {
+          "at": "2026-11-12T16:36:33.632Z",
+          "step": "fund_asset",
+          "message": "asset: intent signed; quote deadline 2026-11-12T17:06:00.141Z"
+        },
+        {
+          "at": "2026-11-12T16:36:34.295Z",
+          "step": "fund_asset",
+          "message": "asset: intent submitted, hash 8v4A8mgHGbRuSj5NUhzE95Zn9Lp8oNFQaQgHzm95nkTx"
+        },
+        {
+          "at": "2026-11-12T16:36:34.643Z",
+          "step": "fund_asset",
+          "message": "1Click status PENDING_DEPOSIT for c1f337442cfde10b653ea6bc4f9f81db4662bd6af97b332484ab04eab035edea"
+        },
+        {
+          "at": "2026-11-12T16:36:40.034Z",
+          "step": "fund_asset",
+          "message": "1Click status PROCESSING for c1f337442cfde10b653ea6bc4f9f81db4662bd6af97b332484ab04eab035edea"
+        },
+        {
+          "at": "2026-11-12T16:36:50.792Z",
+          "step": "fund_asset",
+          "message": "1Click status SUCCESS for c1f337442cfde10b653ea6bc4f9f81db4662bd6af97b332484ab04eab035edea"
+        },
+        {
+          "at": "2026-11-12T16:36:50.792Z",
+          "step": "fund_asset",
+          "message": "asset: 1Click reports delivered"
+        },
+        {
+          "at": "2026-11-12T16:36:51.193Z",
+          "step": "fund_asset",
+          "message": "asset: burner balance 1000000 confirmed on chain"
+        },
+        {
+          "at": "2026-11-12T16:36:51.194Z",
+          "step": "done",
+          "message": "0xe5bdd0651273B78B536fa027031aB65301d3FF9b topped up"
+        }
+      ],
+      "burner": {
+        "index": 0,
+        "address": "0xe5bdd0651273B78B536fa027031aB65301d3FF9b"
+      },
+      "asset": {
+        "asset": "usdc",
+        "payWith": "usdc",
+        "amount": "1000000",
+        "attempts": [
+          {
+            "quote": {
+              "quoteId": "c90e4a3d-1a28-413e-bcda-2e351b13d445",
+              "dry": false,
+              "depositAddress": "c1f337442cfde10b653ea6bc4f9f81db4662bd6af97b332484ab04eab035edea",
+              "amountIn": "1009850",
+              "minAmountIn": "1004800",
+              "amountOut": "1000000",
+              "minAmountOut": "1000000",
+              "amountInUsd": "1.009377390200",
+              "amountOutUsd": "0.999532000000",
+              "deadline": "2026-11-12T17:06:00.141Z",
+              "timeWhenInactive": "2026-11-15T17:06:00.141Z",
+              "timeEstimateSec": 12,
+              "withdrawFee": "4800",
+              "refundFee": "0",
+              "confidentiality": "advanced",
+              "request": {
+                "originAssetId": "nep141:base-0x833589fcd6edb6e08f4c7c32d4f71b54bda02913.omft.near",
+                "destinationAssetId": "nep141:base-0x833589fcd6edb6e08f4c7c32d4f71b54bda02913.omft.near",
+                "swapType": "EXACT_OUTPUT",
+                "amount": "1000000",
+                "depositType": "CONFIDENTIAL_INTENTS",
+                "recipient": "0xe5bdd0651273B78B536fa027031aB65301d3FF9b",
+                "recipientType": "DESTINATION_CHAIN",
+                "refundTo": "viraz.near",
+                "refundType": "CONFIDENTIAL_INTENTS",
+                "slippageBps": 50,
+                "confidentiality": "advanced",
+                "dry": false,
+                "deadline": "2026-11-12T17:06:00.141Z"
+              },
+              "provenance": {
+                "correlationId": "c90e4a3d-1a28-413e-bcda-2e351b13d445",
+                "timestamp": "2026-11-12T16:36:00.242Z",
+                "signature": "ed25519:4S22Ea3i3MonHYvj2nvc9YxQGU1tfFDhJWWtGPWmKSus1N8j19hUmK66MHHhT9aEW4K7kcu9mdXKPdo9P4Hmr8yw",
+                "signatureVerified": true,
+                "signerPublicKey": "ed25519:reYaWhvwu8Jzo3WUM3zhn6VrhuMEF4eADL17qtRVifc"
+              },
+              "wire": {
+                "correlationId": "c90e4a3d-1a28-413e-bcda-2e351b13d445",
+                "timestamp": "2026-11-12T16:36:00.242Z",
+                "signature": "ed25519:4S22Ea3i3MonHYvj2nvc9YxQGU1tfFDhJWWtGPWmKSus1N8j19hUmK66MHHhT9aEW4K7kcu9mdXKPdo9P4Hmr8yw",
+                "quoteRequest": {
+                  "dry": false,
+                  "swapType": "EXACT_OUTPUT",
+                  "slippageTolerance": 50,
+                  "originAsset": "nep141:base-0x833589fcd6edb6e08f4c7c32d4f71b54bda02913.omft.near",
+                  "depositType": "CONFIDENTIAL_INTENTS",
+                  "destinationAsset": "nep141:base-0x833589fcd6edb6e08f4c7c32d4f71b54bda02913.omft.near",
+                  "amount": "1000000",
+                  "refundTo": "viraz.near",
+                  "refundType": "CONFIDENTIAL_INTENTS",
+                  "recipient": "0xe5bdd0651273B78B536fa027031aB65301d3FF9b",
+                  "recipientType": "DESTINATION_CHAIN",
+                  "deadline": "2026-11-12T17:06:00.141Z",
+                  "confidentiality": "advanced",
+                  "quoteWaitingTimeMs": 0,
+                  "depositMode": "SIMPLE",
+                  "insured": false,
+                  "appFees": []
+                },
+                "quote": {
+                  "depositAddress": "c1f337442cfde10b653ea6bc4f9f81db4662bd6af97b332484ab04eab035edea",
+                  "amountIn": "1009850",
+                  "amountInFormatted": "1.00985",
+                  "amountInUsd": "1.009377390200",
+                  "minAmountIn": "1004800",
+                  "amountOut": "1000000",
+                  "amountOutFormatted": "1.0",
+                  "amountOutUsd": "0.999532000000",
+                  "minAmountOut": "1000000",
+                  "deadline": "2026-11-15T17:06:00.141Z",
+                  "timeWhenInactive": "2026-11-15T17:06:00.141Z",
+                  "timeEstimate": 12,
+                  "refundFee": "0",
+                  "withdrawFee": "4800"
+                }
+              }
+            },
+            "prepared": {
+              "depositAddress": "c1f337442cfde10b653ea6bc4f9f81db4662bd6af97b332484ab04eab035edea",
+              "signedData": {
+                "standard": "nep413",
+                "payload": {
+                  "message": "{\"deadline\":\"2026-11-15T17:06:00.141Z\",\"intents\":[{\"intent\":\"transfer\",\"receiver_id\":\"c1f337442cfde10b653ea6bc4f9f81db4662bd6af97b332484ab04eab035edea\",\"tokens\":{\"imt:51e8f94d77b5e90dc9852ca6113771e11e8382ce69473a75e313e41665de7cbe:nep141:base-0x833589fcd6edb6e08f4c7c32d4f71b54bda02913.omft.near\":\"1009850\"}}],\"signer_id\":\"viraz.near\"}",
+                  "nonce": "Vij2xgDhEPMXQC1yhNtG6BhmrIWMT+5yuYin9MLOTG8=",
+                  "recipient": "intents.far"
+                },
+                "public_key": "ed25519:CnZuF2WbnRJn1SSYRgVF6vKZd3pQnjcn87JZM28GULNH",
+                "signature": "ed25519:3BF6Stsh1dRxXA92mmezCm22ofaxNy5a3uEb67VaYis5SwPAdnAQcAeKWTVCoUPRKY9uqkWKypDZxJPgLPoDXSwM"
+              },
+              "summary": {
+                "signerId": "viraz.near",
+                "deadline": "2026-11-15T17:06:00.141Z",
+                "transfers": [
+                  {
+                    "receiverId": "c1f337442cfde10b653ea6bc4f9f81db4662bd6af97b332484ab04eab035edea",
+                    "tokenId": "imt:51e8f94d77b5e90dc9852ca6113771e11e8382ce69473a75e313e41665de7cbe:nep141:base-0x833589fcd6edb6e08f4c7c32d4f71b54bda02913.omft.near",
+                    "amount": "1009850"
+                  }
+                ]
+              },
+              "deadline": "2026-11-15T17:06:00.141Z",
+              "quoteDeadline": "2026-11-12T17:06:00.141Z"
+            },
+            "submitted": {
+              "intentHash": "8v4A8mgHGbRuSj5NUhzE95Zn9Lp8oNFQaQgHzm95nkTx",
+              "correlationId": "2482cab1-33e4-4ac5-920e-3867ef461155",
+              "at": "2026-11-12T16:36:34.295Z"
+            },
+            "status": "SUCCESS",
+            "statusAt": "2026-11-12T16:36:50.792Z",
+            "outcome": "delivered"
+          }
+        ],
+        "balanceBefore": "0",
+        "confirmedBalance": "1000000"
+      }
+    }
+  ],
+  "connect": [
+    {
+      "account": {
+        "v": 1,
+        "id": "ca_b6868d8d6a785ae5",
+        "createdAt": "2026-11-12T16:35:19.731Z",
+        "updatedAt": "2026-11-12T16:46:18.523Z",
+        "status": "closed",
+        "owner": "viraz.near",
+        "chain": "base",
+        "dapp": {
+          "origin": "https://app.uniswap.org",
+          "name": "Uniswap",
+          "url": "https://app.uniswap.org"
+        },
+        "address": {
+          "index": 0,
+          "address": "0xe5bdd0651273B78B536fa027031aB65301d3FF9b"
+        },
+        "budget": {
+          "asset": "usdc",
+          "amount": "1000000",
+          "payWith": "usdc"
+        },
+        "fundings": [
+          {
+            "jobId": "bj_0d085edcbc9a91c6",
+            "at": "2026-11-12T16:35:19.734Z",
+            "reason": "open"
+          }
+        ],
+        "requests": [
+          {
+            "seq": 1,
+            "at": "2026-11-12T16:38:09.604Z",
+            "rpcId": "1794501489144297",
+            "method": "eth_sendTransaction",
+            "origin": "https://app.uniswap.org",
+            "summary": "token approval on 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913: lets 0x000000000022D473030F116dDEE9F6B43aC78BA3 spend an UNLIMITED amount",
+            "findings": [
+              {
+                "level": "warn",
+                "code": "unlimited_approval",
+                "message": "unlimited token approval for 0x000000000022D473030F116dDEE9F6B43aC78BA3"
+              }
+            ],
+            "tx": {
+              "raw": "0x02f8b082210580830f4240836ad2b5830108fa94833589fcd6edb6e08f4c7c32d4f71b54bda0291380b844095ea7b3000000000000000000000000000000000022d473030f116ddee9f6b43ac78ba3ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc001a0186337752dbe30e9654081f6435bed4f054e1d660dda0156f1b2e3b51c70a3baa0363ee353d355f23b2da12c5db1731b5feb5c35b5acc5c2a6ee70ce80ff5643e6",
+              "hash": "0x585db734409d91ac9d042184c78f912b7b4c66fdd02cbf48839002daf6b207e9",
+              "nonce": 0,
+              "gas": "67834",
+              "maxFeePerGas": "7000757",
+              "to": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+              "value": "0",
+              "description": "token approval on 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913: lets 0x000000000022D473030F116dDEE9F6B43aC78BA3 spend an UNLIMITED amount",
+              "signedAt": "2026-11-12T16:38:22.716Z",
+              "broadcastAt": "2026-11-12T16:38:23.249Z",
+              "receipt": {
+                "status": "success",
+                "blockNumber": "56555639",
+                "gasUsed": "55725",
+                "feeWei": "341238203172"
+              }
+            },
+            "decision": "sent",
+            "params": [
+              {
+                "from": "0xe5bdd0651273B78B536fa027031aB65301d3FF9b",
+                "to": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                "data": "0x095ea7b3000000000000000000000000000000000022d473030f116ddee9f6b43ac78ba3ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+                "value": "0x0",
+                "gas": "0x108fa",
+                "chainId": 8453
+              }
+            ]
+          },
+          {
+            "seq": 2,
+            "at": "2026-11-12T16:38:29.587Z",
+            "rpcId": "1794501504458788",
+            "method": "eth_signTypedData_v4",
+            "origin": "https://app.uniswap.org",
+            "summary": "sign typed data PermitSingle for Permit2 (0x000000000022d473030f116ddee9f6b43ac78ba3), spender 0xd6145b2d3f379919e8cdeda7b97e37c4b2ca9c40",
+            "findings": [
+              {
+                "level": "warn",
+                "code": "dapp_unverified",
+                "message": "WalletConnect could not verify the dapp's domain"
+              },
+              {
+                "level": "warn",
+                "code": "unlimited_approval",
+                "message": "the signature grants an unlimited token allowance"
+              }
+            ],
+            "signature": "0xf0976e90c1e228315b12cf2f3a31424d66bf42f7b05fa0a3618a2bc28ac9ca055a49b59f56964f60cddd9c83ee8d9af1513648ea01dc44101e368d6e09f6abe91c",
+            "decision": "signed"
+          },
+          {
+            "seq": 3,
+            "at": "2026-11-12T16:38:32.556Z",
+            "rpcId": "1794501512174845",
+            "method": "eth_sendTransaction",
+            "origin": "https://app.uniswap.org",
+            "summary": "contract call 0x3593564c on 0xd6145b2D3F379919E8CdEda7B97e37c4b2Ca9c40 (1306 bytes of data)",
+            "findings": [],
+            "tx": {
+              "raw": "0x02f9058782210501830f4240836acfc083040b9894d6145b2d3f379919e8cdeda7b97e37c4b2ca9c4080b9051a3593564c000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a0000000000000000000000000000000000000000000000000000000006af5f28f00000000000000000000000000000000000000000000000000000000000000040a000c0400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000036000000000000000000000000000000000000000000000000000000000000003c00000000000000000000000000000000000000000000000000000000000000160000000000000000000000000833589fcd6edb6e08f4c7c32d4f71b54bda02913000000000000000000000000ffffffffffffffffffffffffffffffffffffffff000000000000000000000000000000000000000000000000000000006b1d786d0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000d6145b2d3f379919e8cdeda7b97e37c4b2ca9c40000000000000000000000000000000000000000000000000000000006af5f27500000000000000000000000000000000000000000000000000000000000000e00000000000000000000000000000000000000000000000000000000000000041f0976e90c1e228315b12cf2f3a31424d66bf42f7b05fa0a3618a2bc28ac9ca055a49b59f56964f60cddd9c83ee8d9af1513648ea01dc44101e368d6e09f6abe91c0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001400000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000007a120000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000120000000000000000000000000000000000000000000000000000000000000002b833589fcd6edb6e08f4c7c32d4f71b54bda02913000064420000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000040000000000000000000000000e5bdd0651273b78b536fa027031ab65301d3ff9b0000000000000000000000000000000000000000000000000000dd8afb6ea4f700000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000e5bdd0651273b78b536fa027031ab65301d3ff9b0000000000000000000000000000000000000000000000000000000000000000756e6978000001a1d09fa0e78000944a0000000c0200c001a0f9f66b4f99312a900b8b7c5784628e5af05e9f5853576ab125a5210357255c88a0136532e06a57daeb601c40de56a0db2db9b3c68e0ed2c4b9537b540ec2a1c34d",
+              "hash": "0x275f09eb16cd56aa956b3c197b79e21cb56bb4eb6ea3ef13ed88b89818e52f60",
+              "nonce": 1,
+              "gas": "265112",
+              "maxFeePerGas": "7000000",
+              "to": "0xd6145b2D3F379919E8CdEda7B97e37c4b2Ca9c40",
+              "value": "0",
+              "description": "contract call 0x3593564c on 0xd6145b2D3F379919E8CdEda7B97e37c4b2Ca9c40 (1306 bytes of data)",
+              "signedAt": "2026-11-12T16:38:39.708Z",
+              "broadcastAt": "2026-11-12T16:38:40.347Z",
+              "receipt": {
+                "status": "success",
+                "blockNumber": "56555724",
+                "gasUsed": "180961",
+                "feeWei": "1106972611637"
+              }
+            },
+            "decision": "sent",
+            "params": [
+              {
+                "from": "0xe5bdd0651273B78B536fa027031aB65301d3FF9b",
+                "to": "0xd6145b2D3F379919E8CdEda7B97e37c4b2Ca9c40",
+                "data": "0x3593564c000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000a0000000000000000000000000000000000000000000000000000000006af5f28f00000000000000000000000000000000000000000000000000000000000000040a000c0400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000036000000000000000000000000000000000000000000000000000000000000003c00000000000000000000000000000000000000000000000000000000000000160000000000000000000000000833589fcd6edb6e08f4c7c32d4f71b54bda02913000000000000000000000000ffffffffffffffffffffffffffffffffffffffff000000000000000000000000000000000000000000000000000000006b1d786d0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000d6145b2d3f379919e8cdeda7b97e37c4b2ca9c40000000000000000000000000000000000000000000000000000000006af5f27500000000000000000000000000000000000000000000000000000000000000e00000000000000000000000000000000000000000000000000000000000000041f0976e90c1e228315b12cf2f3a31424d66bf42f7b05fa0a3618a2bc28ac9ca055a49b59f56964f60cddd9c83ee8d9af1513648ea01dc44101e368d6e09f6abe91c0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001400000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000007a120000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000120000000000000000000000000000000000000000000000000000000000000002b833589fcd6edb6e08f4c7c32d4f71b54bda02913000064420000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000040000000000000000000000000e5bdd0651273b78b536fa027031ab65301d3ff9b0000000000000000000000000000000000000000000000000000dd8afb6ea4f700000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000e5bdd0651273b78b536fa027031ab65301d3ff9b0000000000000000000000000000000000000000000000000000000000000000756e6978000001a1d09fa0e78000944a0000000c0200",
+                "value": "0x0",
+                "gas": "0x40b98",
+                "chainId": 8453
+              }
+            ]
+          },
+          {
+            "seq": 4,
+            "at": "2026-11-12T16:41:22.374Z",
+            "rpcId": "1794501681724397",
+            "method": "eth_sendTransaction",
+            "origin": "https://app.uniswap.org",
+            "summary": "token transfer on 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913: 100000 base units to 0x32926c2A3A7811E0FBFA0340b65Fb3E753ecD488",
+            "findings": [
+              {
+                "level": "block",
+                "code": "calldata_linked",
+                "message": "its data names main wallet (0x32926c2A3A7811E0FBFA0340b65Fb3E753ecD488)"
+              }
+            ],
+            "decision": "blocked"
+          }
+        ],
+        "events": [
+          {
+            "at": "2026-11-12T16:35:19.731Z",
+            "message": "opened for https://app.uniswap.org at 0xe5bdd0651273B78B536fa027031aB65301d3FF9b (index 0)"
+          },
+          {
+            "at": "2026-11-12T16:35:19.734Z",
+            "message": "queued open funding bj_0d085edcbc9a91c6"
+          },
+          {
+            "at": "2026-11-12T16:36:51.195Z",
+            "message": "funding bj_0d085edcbc9a91c6 delivered"
+          },
+          {
+            "at": "2026-11-12T16:38:22.716Z",
+            "message": "request 1: signed 0x585db734409d91ac9d042184c78f912b7b4c66fdd02cbf48839002daf6b207e9"
+          },
+          {
+            "at": "2026-11-12T16:38:23.249Z",
+            "message": "broadcast 0x585db734409d91ac9d042184c78f912b7b4c66fdd02cbf48839002daf6b207e9"
+          },
+          {
+            "at": "2026-11-12T16:38:39.708Z",
+            "message": "request 3: signed 0x275f09eb16cd56aa956b3c197b79e21cb56bb4eb6ea3ef13ed88b89818e52f60"
+          },
+          {
+            "at": "2026-11-12T16:38:40.347Z",
+            "message": "broadcast 0x275f09eb16cd56aa956b3c197b79e21cb56bb4eb6ea3ef13ed88b89818e52f60"
+          },
+          {
+            "at": "2026-11-12T16:41:22.376Z",
+            "message": "request 4 blocked: calldata_linked"
+          },
+          {
+            "at": "2026-11-12T16:45:16.162Z",
+            "message": "closing: no more dapp requests"
+          },
+          {
+            "at": "2026-11-12T16:45:29.850Z",
+            "message": "sweep planned: 1 token(s) and ETH"
+          },
+          {
+            "at": "2026-11-12T16:45:30.404Z",
+            "message": "sweep USDC: quote 7e1bde9c-b98d-439a-a133-f8a6368c4614, deposit address 0xF1054d05b2F5c02DB18bD953D35a5bA4FCDEF9aa"
+          },
+          {
+            "at": "2026-11-12T16:45:32.007Z",
+            "message": "sweep USDC: signed 0xb349eb79941c5384c8bcd41b9b38f27e757ec463e9103916ea0afbb7c15bef6e"
+          },
+          {
+            "at": "2026-11-12T16:45:32.611Z",
+            "message": "broadcast 0xb349eb79941c5384c8bcd41b9b38f27e757ec463e9103916ea0afbb7c15bef6e"
+          },
+          {
+            "at": "2026-11-12T16:45:35.453Z",
+            "message": "deposit notice for USDC failed (1Click also watches the chain): /v0/deposit/submit failed (500): Empty AMQP response"
+          },
+          {
+            "at": "2026-11-12T16:45:51.765Z",
+            "message": "sweep USDC: returned to the confidential balance"
+          },
+          {
+            "at": "2026-11-12T16:45:54.047Z",
+            "message": "sweep ETH: quote 9531fe86-9ca1-4df6-8d19-d68b7e1e7b87, deposit address 0xB7D64ebceFEcB2C235a26DF0D4981963e3B8AaAe"
+          },
+          {
+            "at": "2026-11-12T16:45:55.669Z",
+            "message": "sweep ETH: signed 0xf06540278420fa2b906e1d9cacfb1162ee6a02f7b793c23274b45d2064171f7d"
+          },
+          {
+            "at": "2026-11-12T16:45:56.168Z",
+            "message": "broadcast 0xf06540278420fa2b906e1d9cacfb1162ee6a02f7b793c23274b45d2064171f7d"
+          },
+          {
+            "at": "2026-11-12T16:45:56.718Z",
+            "message": "deposit notice for ETH failed (1Click also watches the chain): /v0/deposit/submit failed (500): Empty AMQP response"
+          },
+          {
+            "at": "2026-11-12T16:46:18.519Z",
+            "message": "sweep ETH: returned to the confidential balance"
+          },
+          {
+            "at": "2026-11-12T16:46:18.522Z",
+            "message": "closed; 0xe5bdd0651273B78B536fa027031aB65301d3FF9b retired"
+          }
+        ],
+        "sweep": {
+          "startedAt": "2026-11-12T16:45:17.154Z",
+          "items": [
+            {
+              "assetId": "nep141:base-0x833589fcd6edb6e08f4c7c32d4f71b54bda02913.omft.near",
+              "symbol": "USDC",
+              "decimals": 6,
+              "token": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+              "balance": "500000",
+              "decision": "deposit",
+              "quote": {
+                "quoteId": "7e1bde9c-b98d-439a-a133-f8a6368c4614",
+                "dry": false,
+                "depositAddress": "0xF1054d05b2F5c02DB18bD953D35a5bA4FCDEF9aa",
+                "amountIn": "500000",
+                "minAmountIn": "500000",
+                "amountOut": "500000",
+                "minAmountOut": "497500",
+                "amountInUsd": "0.499770500000",
+                "amountOutUsd": "0.499770500000",
+                "deadline": "2026-11-12T17:15:29.854Z",
+                "timeWhenInactive": "2026-11-15T17:15:29.854Z",
+                "timeEstimateSec": 35,
+                "withdrawFee": "0",
+                "refundFee": "0",
+                "confidentiality": "advanced",
+                "request": {
+                  "originAssetId": "nep141:base-0x833589fcd6edb6e08f4c7c32d4f71b54bda02913.omft.near",
+                  "destinationAssetId": "nep141:base-0x833589fcd6edb6e08f4c7c32d4f71b54bda02913.omft.near",
+                  "swapType": "EXACT_INPUT",
+                  "amount": "500000",
+                  "depositType": "ORIGIN_CHAIN",
+                  "recipient": "viraz.near",
+                  "recipientType": "CONFIDENTIAL_INTENTS",
+                  "refundTo": "viraz.near",
+                  "refundType": "CONFIDENTIAL_INTENTS",
+                  "slippageBps": 50,
+                  "confidentiality": "advanced",
+                  "dry": false,
+                  "deadline": "2026-11-12T17:15:29.854Z"
+                },
+                "provenance": {
+                  "correlationId": "7e1bde9c-b98d-439a-a133-f8a6368c4614",
+                  "timestamp": "2026-11-12T16:45:30.007Z",
+                  "signature": "ed25519:2n1dKU9XvSQQicAWAVHXV4XLcR7xWWycpbmBAEh6vMferZTRAA2eg94vzAA3H9GAbufZoLXAWYtqxHjSKZ4sCSfw",
+                  "signatureVerified": true,
+                  "signerPublicKey": "ed25519:reYaWhvwu8Jzo3WUM3zhn6VrhuMEF4eADL17qtRVifc"
+                },
+                "wire": {
+                  "correlationId": "7e1bde9c-b98d-439a-a133-f8a6368c4614",
+                  "timestamp": "2026-11-12T16:45:30.007Z",
+                  "signature": "ed25519:2n1dKU9XvSQQicAWAVHXV4XLcR7xWWycpbmBAEh6vMferZTRAA2eg94vzAA3H9GAbufZoLXAWYtqxHjSKZ4sCSfw",
+                  "quoteRequest": {
+                    "dry": false,
+                    "swapType": "EXACT_INPUT",
+                    "slippageTolerance": 50,
+                    "originAsset": "nep141:base-0x833589fcd6edb6e08f4c7c32d4f71b54bda02913.omft.near",
+                    "depositType": "ORIGIN_CHAIN",
+                    "destinationAsset": "nep141:base-0x833589fcd6edb6e08f4c7c32d4f71b54bda02913.omft.near",
+                    "amount": "500000",
+                    "refundTo": "viraz.near",
+                    "refundType": "CONFIDENTIAL_INTENTS",
+                    "recipient": "viraz.near",
+                    "recipientType": "CONFIDENTIAL_INTENTS",
+                    "deadline": "2026-11-12T17:15:29.854Z",
+                    "confidentiality": "advanced",
+                    "quoteWaitingTimeMs": 0,
+                    "depositMode": "SIMPLE",
+                    "insured": false,
+                    "appFees": []
+                  },
+                  "quote": {
+                    "depositAddress": "0xF1054d05b2F5c02DB18bD953D35a5bA4FCDEF9aa",
+                    "amountIn": "500000",
+                    "amountInFormatted": "0.5",
+                    "amountInUsd": "0.499770500000",
+                    "minAmountIn": "500000",
+                    "amountOut": "500000",
+                    "amountOutFormatted": "0.5",
+                    "amountOutUsd": "0.499770500000",
+                    "minAmountOut": "497500",
+                    "deadline": "2026-11-15T17:15:29.854Z",
+                    "timeWhenInactive": "2026-11-15T17:15:29.854Z",
+                    "timeEstimate": 35,
+                    "refundFee": "0",
+                    "withdrawFee": "0"
+                  }
+                }
+              },
+              "tx": {
+                "raw": "0x02f8b082210502830f4240836ad0658301270b94833589fcd6edb6e08f4c7c32d4f71b54bda0291380b844a9059cbb000000000000000000000000f1054d05b2f5c02db18bd953d35a5ba4fcdef9aa000000000000000000000000000000000000000000000000000000000007a120c080a03243bd71766747c8adb8ad85c27a558d456d13f09a755f96a8f308940ca60b9ea01dc34def4c77f93d8978e09749a61b164951f52621834e9912ff3dd5a5131f30",
+                "hash": "0xb349eb79941c5384c8bcd41b9b38f27e757ec463e9103916ea0afbb7c15bef6e",
+                "nonce": 2,
+                "gas": "75531",
+                "maxFeePerGas": "7000165",
+                "to": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                "value": "0",
+                "description": "return 0.5 USDC to the confidential balance",
+                "signedAt": "2026-11-12T16:45:32.007Z",
+                "broadcastAt": "2026-11-12T16:45:32.611Z",
+                "receipt": {
+                  "status": "success",
+                  "blockNumber": "56557786",
+                  "gasUsed": "57359",
+                  "feeWei": "351133085868"
+                }
+              },
+              "depositNotified": true,
+              "status": "SUCCESS",
+              "outcome": "returned"
+            },
+            {
+              "assetId": "nep141:base.omft.near",
+              "symbol": "ETH",
+              "decimals": 18,
+              "balance": "268644265542599",
+              "decision": "deposit",
+              "quote": {
+                "quoteId": "9531fe86-9ca1-4df6-8d19-d68b7e1e7b87",
+                "dry": false,
+                "depositAddress": "0xB7D64ebceFEcB2C235a26DF0D4981963e3B8AaAe",
+                "amountIn": "268276874850895",
+                "minAmountIn": "268276874850895",
+                "amountOut": "268276874850895",
+                "minAmountOut": "266935490476640",
+                "amountInUsd": "0.536567163546",
+                "amountOutUsd": "0.536567163546",
+                "deadline": "2026-11-12T17:15:53.548Z",
+                "timeWhenInactive": "2026-11-15T17:15:53.548Z",
+                "timeEstimateSec": 35,
+                "withdrawFee": "0",
+                "refundFee": "0",
+                "confidentiality": "advanced",
+                "request": {
+                  "originAssetId": "nep141:base.omft.near",
+                  "destinationAssetId": "nep141:base.omft.near",
+                  "swapType": "EXACT_INPUT",
+                  "amount": "268276874850895",
+                  "depositType": "ORIGIN_CHAIN",
+                  "recipient": "viraz.near",
+                  "recipientType": "CONFIDENTIAL_INTENTS",
+                  "refundTo": "viraz.near",
+                  "refundType": "CONFIDENTIAL_INTENTS",
+                  "slippageBps": 50,
+                  "confidentiality": "advanced",
+                  "dry": false,
+                  "deadline": "2026-11-12T17:15:53.548Z"
+                },
+                "provenance": {
+                  "correlationId": "9531fe86-9ca1-4df6-8d19-d68b7e1e7b87",
+                  "timestamp": "2026-11-12T16:45:53.659Z",
+                  "signature": "ed25519:4QJ1MiK8zW5BzbuudWdveSYruKzgD8jTJLjGUNULpAR51ZGYrNyGfwrp6vbqGmQzqE9ypgYNV8jbhjdjbf7AReUm",
+                  "signatureVerified": true,
+                  "signerPublicKey": "ed25519:reYaWhvwu8Jzo3WUM3zhn6VrhuMEF4eADL17qtRVifc"
+                },
+                "wire": {
+                  "correlationId": "9531fe86-9ca1-4df6-8d19-d68b7e1e7b87",
+                  "timestamp": "2026-11-12T16:45:53.659Z",
+                  "signature": "ed25519:4QJ1MiK8zW5BzbuudWdveSYruKzgD8jTJLjGUNULpAR51ZGYrNyGfwrp6vbqGmQzqE9ypgYNV8jbhjdjbf7AReUm",
+                  "quoteRequest": {
+                    "dry": false,
+                    "swapType": "EXACT_INPUT",
+                    "slippageTolerance": 50,
+                    "originAsset": "nep141:base.omft.near",
+                    "depositType": "ORIGIN_CHAIN",
+                    "destinationAsset": "nep141:base.omft.near",
+                    "amount": "268276874850895",
+                    "refundTo": "viraz.near",
+                    "refundType": "CONFIDENTIAL_INTENTS",
+                    "recipient": "viraz.near",
+                    "recipientType": "CONFIDENTIAL_INTENTS",
+                    "deadline": "2026-11-12T17:15:53.548Z",
+                    "confidentiality": "advanced",
+                    "quoteWaitingTimeMs": 0,
+                    "depositMode": "SIMPLE",
+                    "insured": false,
+                    "appFees": []
+                  },
+                  "quote": {
+                    "depositAddress": "0xB7D64ebceFEcB2C235a26DF0D4981963e3B8AaAe",
+                    "amountIn": "268276874850895",
+                    "amountInFormatted": "0.000268276874850895",
+                    "amountInUsd": "0.536567163546",
+                    "minAmountIn": "268276874850895",
+                    "amountOut": "268276874850895",
+                    "amountOutFormatted": "0.000268276874850895",
+                    "amountOutUsd": "0.536567163546",
+                    "minAmountOut": "266935490476640",
+                    "deadline": "2026-11-15T17:15:53.548Z",
+                    "timeWhenInactive": "2026-11-15T17:15:53.548Z",
+                    "timeEstimate": 35,
+                    "refundFee": "0",
+                    "withdrawFee": "0"
+                  }
+                }
+              },
+              "tx": {
+                "raw": "0x02f87082210503830f4240836ad17282627094b7d64ebcefecb2c235a26df0d4981963e3b8aaae86f3ff13d3b24f80c001a0a1ba65732314eb0d245eb4bd7d41d21141e645a7b2c1fb385813f29bce51e5c3a06bad71585c9a2e40076165b5d1da27adcc576131fb20b5d4b7d5b4e628691784",
+                "hash": "0xf06540278420fa2b906e1d9cacfb1162ee6a02f7b793c23274b45d2064171f7d",
+                "nonce": 3,
+                "gas": "25200",
+                "maxFeePerGas": "7000434",
+                "to": "0xB7D64ebceFEcB2C235a26DF0D4981963e3B8AaAe",
+                "value": "268276874850895",
+                "description": "return 0.000268276874850895 ETH to the confidential balance",
+                "signedAt": "2026-11-12T16:45:55.669Z",
+                "broadcastAt": "2026-11-12T16:45:56.168Z",
+                "receipt": {
+                  "status": "success",
+                  "blockNumber": "56557903",
+                  "gasUsed": "21000",
+                  "feeWei": "133295345852"
+                }
+              },
+              "depositNotified": true,
+              "status": "SUCCESS",
+              "outcome": "returned"
+            }
+          ],
+          "planned": true
+        }
+      },
+      "linked": [
+        {
+          "id": "0x32926c2A3A7811E0FBFA0340b65Fb3E753ecD488",
+          "label": "main wallet"
+        }
+      ]
+    }
+  ]
+}

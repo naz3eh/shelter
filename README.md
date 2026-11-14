@@ -10,7 +10,8 @@ Every step below runs offline with no keys, funds or accounts unless it says oth
 2. run `pnpm --filter @shelter/cli scan --sample exposed` - see a 98.5/100 exposure score with the findings that link the sample wallets.
 3. run `pnpm --filter @shelter/connect test` - see a dapp swap through a per-dapp address, every kind of linking request refused before anything is signed, and a close killed at each of its 72 outside calls that still returns every token exactly once.
 4. run `pnpm demo -- --dry-run` - see the recorded 2026-11-12 mainnet run replayed offline: every 1Click quote signature, every NEP-413 withdrawal signature and every Base transaction's hash, sender and effect re-checked, the Uniswap session's blocked send blocked again, and Basescan links printed for each transaction (see [Recorded mainnet runs](#recorded-mainnet-runs)).
-5. With a free WalletConnect project id in `.env`: run `pnpm --filter @shelter/cli connect start --sandbox`, then paste any dapp's WalletConnect link - see the dapp connect to a throwaway address, get real signatures, and get "Blocked by Shelter" for a request that names a wallet you linked with `connect link add`.
+5. run `pnpm install --frozen-lockfile && pnpm --filter web dev` and open http://localhost:3000 - see the Shelter Connect demo replaying the recorded Uniswap session: the blocked send, the link graph, the funding timeline and the verified panel (see [Try the web app](#try-the-web-app)). Works from a clean clone with no keys; the TEE panel needs `NEAR_AI_API_KEY` in `.env` as below.
+6. With a free WalletConnect project id in `.env`: run `pnpm --filter @shelter/cli connect start --sandbox`, then paste any dapp's WalletConnect link - see the dapp connect to a throwaway address, get real signatures, and get "Blocked by Shelter" for a request that names a wallet you linked with `connect link add`.
 
 ## Built at NEAR HACKATHON
 
@@ -115,6 +116,17 @@ pnpm --filter @shelter/cli connect close ca_... --account you.near        # swee
 ```
 
 Verified on Base mainnet on 2026-11-12: Uniswap funded from the confidential balance, a 0.5 USDC swap, a send to the linked main wallet blocked, and a close that returned the USDC and ETH and retired the address (transactions in [CONNECT.md](docs/backend/CONNECT.md#verified-on-mainnet-2026-11-12-funded)).
+
+## Try the web app
+
+The web UI replays the recorded Uniswap Connect session: no sign-in, no funds, no keys and no network calls.
+The fixture is the real recording (`scripts/demo/recording.json`) with one swap: the linked main wallet is a demo address, safe because the blocked request was never signed. The NEAR owner stays `viraz.near` — the NEP-413 withdrawals and 1Click sweep quotes are signed over that account, so it cannot be renamed without breaking the signatures the panel verifies; it is already public in the committed recording.
+
+- run `pnpm install --frozen-lockfile && pnpm --filter web dev` - see the app on http://localhost:3000. Dev and build use webpack because the workspace packages use NodeNext `.js` import specifiers that Turbopack cannot resolve yet.
+- open http://localhost:3000 and click **Try it** - see the recorded session open on the block moment: Uniswap asking to send 0.1 USDC to your main wallet, refused by the linkage check before anything is signed.
+- scroll down - see the before/after link graph, the dapp card with "Close and sweep back", the funding timeline (deposit, dapp funding, swap, sweep back), and the verified panel where every signature and transaction is re-checked offline against the recording.
+- paste your own addresses and a transaction or typed-data JSON into **Try the linkage check** - see blocked or allowed with the reason, computed live in your browser.
+- `NEXT_PUBLIC_SHELTER_LIVE=1` selects the live wallet source once `packages/connect` ships a browser entry; today it shows a typed stub that says so.
 
 ## Recorded mainnet runs
 
