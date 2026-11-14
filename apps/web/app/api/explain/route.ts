@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { ensureRootEnv } from "@/lib/server-env";
 import {
   buildExplainMessages,
   DEFAULT_MODEL,
@@ -21,6 +22,7 @@ const TX_HASH = /\b0x?[0-9a-fA-F]{64}\b/;
  * verify everything itself. No request bodies are logged or stored.
  */
 export async function POST(req: Request) {
+  ensureRootEnv();
   const apiKey = process.env.NEAR_AI_API_KEY;
   if (!apiKey) {
     return Response.json(

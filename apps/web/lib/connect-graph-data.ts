@@ -23,6 +23,14 @@ export interface GraphSpecEdge {
   tone?: "normal" | "blocked" | "warn";
   /** Curve offset for parallel edges, -1..1. */
   bend?: number;
+  /** Position of the label along the curve (0..1, default 0.5). */
+  labelT?: number;
+  /** Which side of the curve the label sits on: 1 = above, -1 = below. */
+  labelSide?: number;
+  /** Distance of the label from the curve in px (default 13). */
+  labelOffset?: number;
+  /** Absolute label position in viewBox coords, overriding curve placement. */
+  labelPos?: [number, number];
 }
 
 export interface LinkDiagram {
@@ -45,7 +53,7 @@ const edge = (from: string, to: string, kind: GraphEdge["kind"], chain: GraphEdg
 export const TODAY: LinkDiagram = {
   title: "Today",
   caption: "Your wallets are linked to each other, and the dapp sees your main wallet.",
-  viewBox: "0 0 380 250",
+  viewBox: "-14 0 409 250",
   nodes: [
     { node: node("near", "wallet", "Your NEAR account"), x: 60, y: 60, sublabel: "owns the confidential balance" },
     { node: node("conf", "entity", "Confidential balance"), x: 60, y: 185, sublabel: "intents.far" },
@@ -54,9 +62,9 @@ export const TODAY: LinkDiagram = {
   ],
   edges: [
     { edge: edge("near", "conf", "funding"), label: "deposit", bend: -0.4 },
-    { edge: edge("near", "main", "transfer"), label: "same owner: linkable", tone: "warn", bend: 0.5 },
-    { edge: edge("main", "dapp", "transfer"), label: "dapp sees this address", tone: "warn", bend: -0.4 },
-    { edge: edge("conf", "dapp", "transfer"), tone: "blocked", bend: 0.8, label: "no way to spend privately" },
+    { edge: edge("near", "main", "transfer"), label: "same owner: linkable", tone: "warn", bend: 0.5, labelSide: -1, labelOffset: 30 },
+    { edge: edge("main", "dapp", "transfer"), label: "dapp sees this address", tone: "warn", bend: -0.4, labelPos: [275, 94] },
+    { edge: edge("conf", "dapp", "transfer"), tone: "blocked", bend: 0.8, label: "no way to spend privately", labelPos: [184, 130] },
   ],
 };
 
@@ -64,7 +72,7 @@ export const TODAY: LinkDiagram = {
 export const AFTER: LinkDiagram = {
   title: "After Connect",
   caption: "Each dapp gets its own address. The confidential balance is the only funder, and the link back is blocked.",
-  viewBox: "0 0 420 260",
+  viewBox: "-14 0 459 260",
   nodes: [
     { node: node("conf", "entity", "Confidential balance"), x: 60, y: 130, sublabel: "intents.far" },
     { node: node("dappaddr", "wallet", "Dapp address"), x: 205, y: 60, sublabel: "0xe5bd…f9b, this dapp only" },
@@ -73,10 +81,10 @@ export const AFTER: LinkDiagram = {
     { node: node("main", "wallet", "Your main wallet"), x: 365, y: 205, ghost: true },
   ],
   edges: [
-    { edge: edge("conf", "dappaddr", "funding"), label: "1Click withdraw", bend: -0.6 },
+    { edge: edge("conf", "dappaddr", "funding"), label: "1Click withdraw", bend: -0.6, labelPos: [90, 100] },
     { edge: edge("dappaddr", "dapp", "transfer"), label: "signed requests", bend: 0 },
-    { edge: edge("dappaddr", "conf", "funding"), label: "sweep back", bend: 0.6 },
-    { edge: edge("dappaddr", "near", "transfer"), tone: "blocked", bend: -0.5, label: "blocked" },
+    { edge: edge("dappaddr", "conf", "funding"), label: "sweep back", bend: -0.9, labelPos: [156, 125] },
+    { edge: edge("dappaddr", "near", "transfer"), tone: "blocked", bend: -0.5, label: "blocked", labelPos: [285, 92] },
     { edge: edge("dappaddr", "main", "transfer"), tone: "blocked", bend: 0.5, label: "blocked" },
   ],
 };

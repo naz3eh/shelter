@@ -11,6 +11,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { ArrowDownToLine, Ban, Coins, Send, Undo2 } from "lucide-react";
 import type { ConnectAccountView } from "@/lib/connect-source";
 import { BURNER_ASSETS } from "@shelter/burner";
+import { requestListLabel } from "@/lib/request-decode";
 import { CopyableHash } from "./copyable-hash";
 import { BASESCAN_TX, formatToken, shortHash } from "@/lib/connect-format";
 import { cn } from "@/lib/utils";
@@ -84,7 +85,7 @@ function buildEvents(view: ConnectAccountView): TimelineEvent[] {
     events.push({
       at: r.at,
       tone: r.decision === "blocked" ? "blocked" : "use",
-      title: r.summary,
+      title: requestListLabel(r),
       detail: r.decision === "blocked" ? "blocked by the linkage check" : r.decision,
       hash: r.tx?.hash,
     });

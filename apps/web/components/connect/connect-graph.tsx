@@ -15,11 +15,19 @@ import { cn } from "@/lib/utils";
 const NODE_W = 132;
 const NODE_H = 46;
 
-function edgePath(
+interface EdgeGeom {
+  d: string;
+  /** Quadratic control point. */
+  c: { x: number; y: number };
+  p0: { x: number; y: number };
+  p1: { x: number; y: number };
+}
+
+function edgeGeom(
   from: GraphSpecNode & { x: number; y: number },
   to: GraphSpecNode & { x: number; y: number },
   bend = 0,
-): string {
+): EdgeGeom {
   // Anchor points: right/left edges when the nodes are side by side,
   // bottom/top when stacked.
   const dx = to.x - from.x;
@@ -49,9 +57,26 @@ function edgePath(
     x1 = from.x;
     x2 = to.x;
   }
-  const mx = (x1 + x2) / 2 + bend * 60 * Math.sign(dx || 1 || dy);
-  const my = (y1 + y2) / 2 + bend * 60 * Math.sign(dy || 1);
-  return `M ${x1} ${y1} Q ${mx} ${my} ${x2} ${y2}`;
+  const p0 = { x: x1, y: y1 };
+  const p1 = { x: x2, y: y2 };
+  const c = {
+    x: (x1 + x2) / 2 + bend * 60 * Math.sign(dx || 1 || dy),
+    y: (y1 + y2) / 2 + bend * 60 * Math.sign(dy || 1),
+  };
+  return { d: `M ${x1} ${y1} Q ${c.x} ${c.y} ${x2} ${y2}`, c, p0, p1 };
+}
+
+/** Point on the quadratic curve at t, plus the unit normal (y-down coords). */
+function curvePoint(g: EdgeGeom, t: number) {
+  const u = 1 - t;
+  const x = u * u * g.p0.x + 2 * u * t * g.c.x + t * t * g.p1.x;
+  const y = u * u * g.p0.y + 2 * u * t * g.c.y + t * t * g.p1.y;
+  // Tangent of a quadratic Bezier.
+  const tx = 2 * u * (g.c.x - g.p0.x) + 2 * t * (g.p1.x - g.c.x);
+  const ty = 2 * u * (g.c.y - g.p0.y) + 2 * t * (g.p1.y - g.c.y);
+  const len = Math.hypot(tx, ty) || 1;
+  // Normal pointing "up" in screen space for a left-to-right edge is (ty, -tx).
+  return { x, y, nx: ty / len, ny: -tx / len };
 }
 
 function Diagram({ diagram, dappAddress }: { diagram: LinkDiagram; dappAddress?: string }) {
@@ -73,10 +98,20 @@ function Diagram({ diagram, dappAddress }: { diagram: LinkDiagram; dappAddress?:
           const from = byId.get(e.edge.from);
           const to = byId.get(e.edge.to);
           if (!from || !to) return null;
-          const d = edgePath(from, to, e.bend ?? 0);
-          const mx = (from.x + to.x) / 2;
-          const my = (from.y + to.y) / 2;
+          const geom = edgeGeom(from, to, e.bend ?? 0);
+          const d = geom.d;
           const tone = e.tone ?? "normal";
+          const mid = curvePoint(geom, 0.5);
+          const labelPos = e.label
+            ? e.labelPos
+              ? { x: e.labelPos[0], y: e.labelPos[1] }
+              : (() => {
+                  const p = curvePoint(geom, e.labelT ?? 0.5);
+                  const side = e.labelSide ?? (p.ny <= 0 ? 1 : -1);
+                  const off = e.labelOffset ?? 13;
+                  return { x: p.x + p.nx * side * off, y: p.y + p.ny * side * off };
+                })()
+            : null;
           return (
             <g key={`${e.edge.from}-${e.edge.to}-${i}`}>
               <motion.path
@@ -96,17 +131,18 @@ function Diagram({ diagram, dappAddress }: { diagram: LinkDiagram; dappAddress?:
                 viewport={{ once: true }}
                 transition={{ duration: 0.7, delay: 0.15 + i * 0.12, ease: "easeOut" }}
               />
-              {e.label ? (
+              {e.label && labelPos ? (
                 <text
-                  x={mx}
-                  y={my - 6}
+                  x={labelPos.x}
+                  y={labelPos.y}
                   textAnchor="middle"
                   className={cn(
-                    "fill-muted-foreground",
+                    "edge-label fill-muted-foreground",
                     tone === "blocked" && "fill-red-300/90",
                     tone === "warn" && "fill-amber-200/80",
                   )}
                   fontSize="10"
+                  style={{ paintOrder: "stroke", stroke: "var(--card, #0c0c0e)", strokeWidth: 3, strokeLinejoin: "round" }}
                 >
                   {e.label}
                 </text>
@@ -117,7 +153,7 @@ function Diagram({ diagram, dappAddress }: { diagram: LinkDiagram; dappAddress?:
                   whileInView={reduce ? undefined : { opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
                   transition={{ delay: 0.5 + i * 0.12 }}
-                  transform={`translate(${mx}, ${my + 8})`}
+                  transform={`translate(${mid.x}, ${mid.y})`}
                 >
                   <circle r="7" className="fill-red-500/20 stroke-red-400/70" strokeWidth="1" />
                   <text textAnchor="middle" dy="3" fontSize="9" className="fill-red-300">

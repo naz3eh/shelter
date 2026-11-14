@@ -10,6 +10,7 @@ import {
   decodeErc20,
   describeRequest,
   messageText,
+  parseRequest,
   type DappRequest,
 } from "@shelter/connect";
 import { formatUnits, maxUint160 } from "viem";
@@ -28,6 +29,8 @@ export interface DecodedRequest {
   method: string;
   /** One-line summary, same wording the engine logs. */
   headline: string;
+  /** Compact plain-words label for lists (request rows, timeline). */
+  listLabel: string;
   fields: DecodedField[];
   /** Plain-words warnings, e.g. an unlimited approval. */
   warnings: string[];
@@ -80,23 +83,29 @@ function decodeTransaction(req: Extract<DappRequest, { method: "eth_sendTransact
     { label: "Network", value: t.chainId === undefined ? "Base (8453)" : `chain ${t.chainId}` },
   ];
   const warnings: string[] = [];
+  let listLabel = "Send transaction";
 
+  const hasData = !!t.data && t.data !== "0x";
   if (!t.to) {
     fields.push({ label: "Contract", value: "new contract (creation)", warn: true });
     warnings.push("Contract creation is not supported and is blocked.");
+    listLabel = "Deploy contract";
   } else {
-    fields.push({ label: "Contract", value: contractLabel(t.to), mono: true });
+    fields.push({ label: hasData ? "Contract" : "Recipient", value: contractLabel(t.to), mono: true });
   }
 
   if (t.value > 0n) fields.push({ label: "Value", value: formatEth(t.value.toString()) });
 
   const e = decodeErc20(t.data);
+  const tokenAmount = (amount: bigint, token: { decimals: number; symbol: string } | undefined) =>
+    token ? formatToken(amount.toString(), token.decimals, token.symbol) : `${amount} base units`;
   if (e?.fn === "transfer") {
     const token = tokenOf(t.to);
     fields.push({ label: "Action", value: "Send tokens" });
     fields.push({ label: "Token", value: token ? `${token.name} (${contractLabel(t.to!)})` : contractLabel(t.to!), mono: !token });
-    fields.push({ label: "Amount", value: token ? formatToken(e.amount.toString(), token.decimals, token.symbol) : `${e.amount} base units` });
+    fields.push({ label: "Amount", value: tokenAmount(e.amount, token) });
     fields.push({ label: "Recipient", value: shortAddress(e.to), mono: true });
+    listLabel = `Send ${tokenAmount(e.amount, token)} to ${shortAddress(e.to)}`;
   } else if (e?.fn === "approve") {
     const token = tokenOf(t.to);
     const unlimited = e.amount >= maxUint160;
@@ -108,6 +117,7 @@ function decodeTransaction(req: Extract<DappRequest, { method: "eth_sendTransact
       value: unlimited ? "Unlimited" : token ? formatToken(e.amount.toString(), token.decimals, token.symbol) : `${e.amount} base units`,
       warn: unlimited,
     });
+    listLabel = `Approve ${token?.symbol ?? "tokens"} to ${contractLabel(e.spender)}${unlimited ? " — unlimited" : ""}`;
     if (unlimited) {
       warnings.push("Unlimited approval: the spender can move any amount of this token, now and later.");
     }
@@ -115,18 +125,25 @@ function decodeTransaction(req: Extract<DappRequest, { method: "eth_sendTransact
     const token = tokenOf(t.to);
     fields.push({ label: "Action", value: "Move tokens" });
     fields.push({ label: "Token", value: token ? `${token.name} (${contractLabel(t.to!)})` : contractLabel(t.to!), mono: !token });
-    fields.push({ label: "Amount", value: token ? formatToken(e.amount.toString(), token.decimals, token.symbol) : `${e.amount} base units` });
+    fields.push({ label: "Amount", value: tokenAmount(e.amount, token) });
     fields.push({ label: "From", value: shortAddress(e.from), mono: true });
     fields.push({ label: "To", value: shortAddress(e.to), mono: true });
+    listLabel = `Move ${tokenAmount(e.amount, token)} from ${shortAddress(e.from)} to ${shortAddress(e.to)}`;
   } else if (t.data && t.data !== "0x") {
     const bytes = (t.data.length - 2) / 2;
     fields.push({ label: "Action", value: "Contract call" });
     fields.push({ label: "Call data", value: `${t.data.slice(0, 10)} (${bytes} bytes)`, mono: true });
+    listLabel = t.to
+      ? `Contract call ${t.data.slice(0, 10)} on ${contractLabel(t.to)} (${bytes} bytes)`
+      : "Deploy contract";
   } else if (t.value === 0n) {
     fields.push({ label: "Action", value: "Send 0 ETH (likely a failed request)" });
+    listLabel = t.to ? `Send 0 ETH to ${shortAddress(t.to)}` : "Deploy contract";
+  } else {
+    listLabel = t.to ? `Send ${formatEth(t.value.toString())} ETH to ${shortAddress(t.to)}` : "Deploy contract";
   }
 
-  return { method: req.method, headline: describeRequest(req), fields, warnings };
+  return { method: req.method, headline: describeRequest(req), listLabel, fields, warnings };
 }
 
 function decodeMessage(req: Extract<DappRequest, { method: "personal_sign" }>): DecodedRequest {
@@ -136,6 +153,7 @@ function decodeMessage(req: Extract<DappRequest, { method: "personal_sign" }>): 
   return {
     method: req.method,
     headline: describeRequest(req),
+    listLabel: `Sign message as ${shortAddress(req.address)}`,
     fields: [
       { label: "Method", value: METHOD_NAMES[req.method] ?? req.method },
       { label: "Account", value: shortAddress(req.address), mono: true },
@@ -168,7 +186,14 @@ function decodeTypedData(req: Extract<DappRequest, { method: "eth_signTypedData_
   if (spender && spender.toLowerCase() === String(dom.verifyingContract ?? "").toLowerCase()) {
     warnings.push("The signature lets the contract spend tokens itself.");
   }
-  return { method: req.method, headline: describeRequest(req), fields, warnings };
+  const domainName = dom.name ? String(dom.name) : "an unnamed domain";
+  return {
+    method: req.method,
+    headline: describeRequest(req),
+    listLabel: `Sign ${String(td.primaryType)} for ${domainName}`,
+    fields,
+    warnings,
+  };
 }
 
 function decodeOther(req: DappRequest): DecodedRequest {
@@ -178,7 +203,13 @@ function decodeOther(req: DappRequest): DecodedRequest {
   }
   if (req.method === "eth_chainId") fields.push({ label: "Result", value: "0x2105 (Base)" });
   if (req.method === "eth_accounts") fields.push({ label: "Result", value: "this dapp's address only" });
-  return { method: req.method, headline: describeRequest(req), fields, warnings: [] };
+  return {
+    method: req.method,
+    headline: describeRequest(req),
+    listLabel: METHOD_NAMES[req.method] ?? req.method,
+    fields,
+    warnings: [],
+  };
 }
 
 /** Plain-words decode of any parsed dapp request. */
@@ -192,5 +223,23 @@ export function decodeDappRequest(req: DappRequest): DecodedRequest {
       return decodeTypedData(req);
     default:
       return decodeOther(req);
+  }
+}
+
+/**
+ * Compact label for request lists and the funding timeline, decoded with the
+ * same parser the approval sheet uses. Falls back to the engine's recorded
+ * `summary` when the record has no params to re-parse.
+ */
+export function requestListLabel(record: {
+  method: string;
+  params?: unknown;
+  summary: string;
+}): string {
+  if (record.params === undefined) return record.summary;
+  try {
+    return decodeDappRequest(parseRequest(record.method, record.params)).listLabel;
+  } catch {
+    return record.summary;
   }
 }

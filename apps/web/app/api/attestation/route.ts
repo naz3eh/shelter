@@ -1,4 +1,5 @@
 import { DEFAULT_MODEL, NEAR_AI_CLOUD_BASE } from "@shelter/attest";
+import { ensureRootEnv } from "@/lib/server-env";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,6 +10,7 @@ export const dynamic = "force-dynamic";
  * attestation checks run on the client; nothing is logged or stored here.
  */
 export async function GET(req: Request) {
+  ensureRootEnv();
   const apiKey = process.env.NEAR_AI_API_KEY;
   if (!apiKey) {
     return Response.json(

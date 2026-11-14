@@ -96,7 +96,13 @@ function runCheck(walletsText: string, requestText: string, origin: string): Run
   } catch {
     decoded = null;
   }
-  return { verdict, headline: describeRequest(req), findings, self, decoded };
+  return {
+    verdict,
+    headline: decoded?.listLabel ?? describeRequest(req),
+    findings,
+    self,
+    decoded,
+  };
 }
 
 function exampleBlocked(): { wallets: string; request: string } {

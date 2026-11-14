@@ -38,6 +38,16 @@ describe("decodeDappRequest", () => {
       expect.objectContaining({ label: "Recipient", value: expect.stringMatching(/^0x[0-9a-fA-F]{4}…[0-9a-fA-F]{4}$/) }),
     );
   });
+
+  it("gives list labels with contract names instead of raw hex", () => {
+    expect(decode(1).listLabel).toContain("Permit2");
+    expect(decode(1).listLabel).toContain("unlimited");
+    expect(decode(2).listLabel).toContain("Uniswap Universal Router");
+    expect(decode(3).listLabel).toContain("USDC");
+    for (const seq of [1, 2, 3]) {
+      expect(decode(seq).listLabel).not.toMatch(/0x[0-9a-fA-F]{30,}/);
+    }
+  });
 });
 
 describe("ReplaySource", () => {

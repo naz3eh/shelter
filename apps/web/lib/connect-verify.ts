@@ -3,10 +3,13 @@
  *
  * Every check is computed from the recording data, the same way
  * `demo replay` checks a real run (apps/cli/src/demo/recording.ts):
- * - 1Click quote signatures against the recorded signer key, and the mapped
- *   fields against the signed wire response;
- * - NEP-413 withdrawal signatures, and that each intent only pays the
- *   quote's deposit address from the owner's account;
+ * - 1Click quote signatures against 1Click's own published key (the default
+ *   in `verifyQuoteSignature`), and the mapped fields against the signed
+ *   wire response;
+ * - NEP-413 withdrawal signatures against the key recorded with them —
+ *   offline we can only say the signature matches that key, not who owns it —
+ *   and that each intent only pays the quote's deposit address from the
+ *   owner's account;
  * - dapp transactions: hash is the keccak of the signed bytes, the sender
  *   recovers to the dapp address, and the transaction does what was asked;
  * - blocked requests still block under the linkage check;
@@ -85,7 +88,7 @@ function quoteCheck(id: string, label: string, q: Quote): VerifyCheck {
   return check(
     id,
     label,
-    verifyQuoteSignature(q.wire, q.provenance.signerPublicKey) && quoteMatchesWire(q),
+    verifyQuoteSignature(q.wire) && quoteMatchesWire(q),
     { detail: `quote ${q.quoteId}` },
   );
 }
@@ -108,7 +111,7 @@ function intentChecks(id: string, label: string, attempt: FundingAttempt, owner:
   } catch {
     sigOk = false;
   }
-  out.push(check(`${id}-sig`, `${label}: NEP-413 signature by ${owner}`, sigOk));
+  out.push(check(`${id}-sig`, `${label}: NEP-413 signature matches the recorded key (${owner})`, sigOk));
 
   let shapeOk = false;
   try {

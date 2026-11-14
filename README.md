@@ -10,7 +10,8 @@ Every step below runs offline with no keys, funds or accounts unless it says oth
 2. run `pnpm --filter @shelter/cli scan --sample exposed` - see a 98.5/100 exposure score with the findings that link the sample wallets.
 3. run `pnpm --filter @shelter/connect test` - see a dapp swap through a per-dapp address, every kind of linking request refused before anything is signed, and a close killed at each of its 70 outside calls that still returns every token exactly once.
 4. run `pnpm demo -- --dry-run --recording <file>` on a recorded mainnet session - see every 1Click quote signature, every NEP-413 withdrawal signature and every Base transaction checked offline (see [Recorded mainnet runs](#recorded-mainnet-runs)).
-5. With a free WalletConnect project id in `.env`: run `pnpm --filter @shelter/cli connect start --sandbox`, then paste any dapp's WalletConnect link - see the dapp connect to a throwaway address, get real signatures, and get "Blocked by Shelter" for a request that names a wallet you linked with `connect link add`.
+5. run `pnpm install --frozen-lockfile && pnpm --filter web dev` and open http://localhost:3000 - see the Shelter Connect demo replaying the recorded Uniswap session: the blocked send, the link graph, the funding timeline and the verified panel (see [Try the web app](#try-the-web-app)). Works from a clean clone with no keys; the TEE panel needs `NEAR_AI_API_KEY` in `.env` as below.
+6. With a free WalletConnect project id in `.env`: run `pnpm --filter @shelter/cli connect start --sandbox`, then paste any dapp's WalletConnect link - see the dapp connect to a throwaway address, get real signatures, and get "Blocked by Shelter" for a request that names a wallet you linked with `connect link add`.
 
 ## Built at NEAR HACKATHON
 
@@ -119,6 +120,7 @@ Verified on Base mainnet on 2026-11-12: Uniswap funded from the confidential bal
 ## Try the web app
 
 The web UI replays the recorded Uniswap Connect session: no sign-in, no funds, no keys and no network calls.
+The recording's NEAR-side identities are swapped for demo ones (`shelter-demo.near` as owner, a demo address as the linked main wallet); every Base transaction is the real session.
 
 - run `pnpm install --frozen-lockfile && pnpm --filter web dev` - see the app on http://localhost:3000. Dev and build use webpack because the workspace packages use NodeNext `.js` import specifiers that Turbopack cannot resolve yet.
 - open http://localhost:3000 and click **Try it** - see the recorded session open on the block moment: Uniswap asking to send 0.1 USDC to your main wallet, refused by the linkage check before anything is signed.

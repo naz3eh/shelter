@@ -2,6 +2,7 @@
 
 import { ArrowLeftRight, FileSignature, PenLine, RefreshCw, Send, ShieldX, Wallet } from "lucide-react";
 import type { RequestRecord } from "@shelter/connect";
+import { requestListLabel } from "@/lib/request-decode";
 import { cn } from "@/lib/utils";
 
 const METHOD_ICON = {
@@ -61,7 +62,7 @@ export function RequestRow({
         </span>
         <span className="min-w-0 flex-1">
           <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className="text-sm font-medium text-foreground">{request.summary}</span>
+            <span className="text-sm font-medium text-foreground">{requestListLabel(request)}</span>
             {decision ? (
               <span
                 className={cn(
