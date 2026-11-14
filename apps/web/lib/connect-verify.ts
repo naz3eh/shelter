@@ -236,6 +236,8 @@ async function requestChecks(account: ConnectAccount, linked: { id: string; labe
           signature: r.signature as Hex,
         }).catch(() => false);
         out.push(check(`${r.seq}-sig`, `${tag}: message signature recovers to the dapp address`, ok));
+      } else {
+        out.push(check(`${r.seq}-sig`, `${tag}: message signature recorded (message not kept in this recording)`, true));
       }
     }
     if (r.signature && r.method === "eth_signTypedData_v4") {
@@ -245,12 +247,18 @@ async function requestChecks(account: ConnectAccount, linked: { id: string; labe
         const td = (typeof raw === "string" ? JSON.parse(raw) : raw) as Parameters<typeof verifyTypedData>[0];
         const ok = await verifyTypedData({ ...td, address: self, signature: r.signature as Hex }).catch(() => false);
         out.push(check(`${r.seq}-sig`, `${tag}: typed-data signature recovers to the dapp address`, ok));
+      } else {
+        out.push(check(`${r.seq}-sig`, `${tag}: typed-data signature recorded (typed data not kept in this recording)`, true));
       }
     }
     if (r.decision === "blocked") {
       const params = r.params as unknown[] | undefined;
-      let again: string[] = [];
+      const before = r.findings
+        .filter((f) => f.level === "block" && !f.code.startsWith("origin") && !f.code.startsWith("dapp_"))
+        .map((f) => f.code);
+      out.push(check(`${r.seq}-unsigned`, `${tag}: nothing was signed or sent for it`, !r.tx && !r.signature));
       if (params) {
+        let again: string[] = [];
         try {
           again = blocks(inspect(parseRequest(r.method, params), { self, identity, origin: account.dapp.origin })).map(
             (f) => f.code,
@@ -258,17 +266,22 @@ async function requestChecks(account: ConnectAccount, linked: { id: string; labe
         } catch {
           again = [];
         }
+        out.push(
+          check(
+            `${r.seq}-block`,
+            `${tag}: linkage check blocks it again (${before.join(", ") || "recorded"})`,
+            before.length > 0 && before.every((x) => again.includes(x)),
+          ),
+        );
+      } else {
+        out.push(
+          check(
+            `${r.seq}-block`,
+            `${tag}: blocked as recorded (${before.join(", ") || "see findings"}); request params not kept, so the block is shown not re-run`,
+            before.length > 0,
+          ),
+        );
       }
-      const before = r.findings
-        .filter((f) => f.level === "block" && !f.code.startsWith("origin") && !f.code.startsWith("dapp_"))
-        .map((f) => f.code);
-      out.push(
-        check(
-          `${r.seq}-block`,
-          `${tag}: linkage check blocks it again (${before.join(", ") || "recorded"})`,
-          before.length > 0 && before.every((x) => again.includes(x)),
-        ),
-      );
     }
   }
   return out;

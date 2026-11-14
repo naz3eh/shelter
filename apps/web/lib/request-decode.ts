@@ -14,7 +14,7 @@ import {
   type DappRequest,
 } from "@shelter/connect";
 import { formatUnits, maxUint160 } from "viem";
-import { formatEth, formatToken, shortAddress } from "./connect-format";
+import { formatEth, formatToken, shortenAddresses, shortAddress } from "./connect-format";
 
 export interface DecodedField {
   label: string;
@@ -236,7 +236,7 @@ export function requestListLabel(record: {
   params?: unknown;
   summary: string;
 }): string {
-  if (record.params === undefined) return record.summary;
+  if (record.params === undefined) return shortenAddresses(record.summary);
   try {
     return decodeDappRequest(parseRequest(record.method, record.params)).listLabel;
   } catch {

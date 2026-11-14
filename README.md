@@ -120,7 +120,7 @@ Verified on Base mainnet on 2026-11-12: Uniswap funded from the confidential bal
 ## Try the web app
 
 The web UI replays the recorded Uniswap Connect session: no sign-in, no funds, no keys and no network calls.
-The recording's NEAR-side identities are swapped for demo ones (`shelter-demo.near` as owner, a demo address as the linked main wallet); every Base transaction is the real session.
+The fixture is the real recording (`scripts/demo/recording.json`) with one swap: the linked main wallet is a demo address, safe because the blocked request was never signed. The NEAR owner stays `viraz.near` — the NEP-413 withdrawals and 1Click sweep quotes are signed over that account, so it cannot be renamed without breaking the signatures the panel verifies; it is already public in the committed recording.
 
 - run `pnpm install --frozen-lockfile && pnpm --filter web dev` - see the app on http://localhost:3000. Dev and build use webpack because the workspace packages use NodeNext `.js` import specifiers that Turbopack cannot resolve yet.
 - open http://localhost:3000 and click **Try it** - see the recorded session open on the block moment: Uniswap asking to send 0.1 USDC to your main wallet, refused by the linkage check before anything is signed.

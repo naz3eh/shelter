@@ -19,11 +19,11 @@ describe("RequestSheet blocked state", () => {
     render(<RequestSheet view={v} request={blocked} open onOpenChange={() => {}} />);
 
     expect((await screen.findAllByText("Blocked by Shelter")).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/your main wallet/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/main wallet/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText("calldata_linked").length).toBeGreaterThan(0);
-    // Decoded request details are still visible under the block banner.
-    expect(screen.getAllByText("Send tokens").length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/0\.1 USDC/).length).toBeGreaterThan(0);
+    // The recording predates request params, so the sheet shows the engine's
+    // recorded summary (addresses shortened) instead of a decoded field list.
+    expect(screen.getAllByText(/100000 base units/).length).toBeGreaterThan(0);
   });
 
   it("shows warnings but no block banner for the approved request", async () => {

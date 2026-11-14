@@ -20,7 +20,7 @@ export function formatToken(amount: string, decimals: number, symbol: string): s
     const v = BigInt(amount);
     const s = v.toString().padStart(decimals + 1, "0");
     const int = s.slice(0, s.length - decimals) || "0";
-    const frac = decimals > 0 ? s.slice(s.length - decimals).replace(/0+$/, "") : "";
+    const frac = decimals > 0 ? s.slice(s.length - decimals).replace(/0+$/, "").slice(0, 8) : "";
     return `${int}${frac ? `.${frac}` : ""} ${symbol}`;
   } catch {
     return `${amount} ${symbol}`;

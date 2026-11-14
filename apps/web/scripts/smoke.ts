@@ -9,7 +9,10 @@ const accounts = await src.listAccounts();
 console.log("accounts:", accounts.map((a) => `${a.id} ${a.dapp.origin} ${a.status}`));
 const view = await src.getAccount(accounts[0]!.id);
 for (const r of view!.account.requests) {
-  const d = decodeDappRequest(parseRequest(r.method, r.params));
+  const d =
+    r.params === undefined
+      ? { headline: r.summary, fields: [{ label: "Method", value: r.method }], warnings: [] as string[] }
+      : decodeDappRequest(parseRequest(r.method, r.params));
   console.log(`\nreq ${r.seq} [${r.decision}] ${d.headline}`);
   for (const f of d.fields) console.log(`   ${f.label}: ${f.value}`);
   for (const w of d.warnings) console.log(`   WARN: ${w}`);

@@ -156,7 +156,7 @@ export function RequestSheet({ view, request, open, onOpenChange }: RequestSheet
             ))}
           </dl>
         ) : (
-          <p className="text-sm text-muted-foreground">{request.summary}</p>
+          <p className="text-sm text-muted-foreground">{shortenAddresses(request.summary)}</p>
         )}
 
         {decoded?.warnings.map((w) => (
