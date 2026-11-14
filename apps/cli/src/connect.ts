@@ -48,7 +48,7 @@ import { createSqliteStore } from "@shelter/keys/sqlite";
 import { getAddress, isAddress } from "viem";
 import { flag, loadEnv, subArgs } from "./env.js";
 import { createMeteorSigner, type MeteorSigner } from "./near/meteor-signer.js";
-import { ask, askHidden, confirm, listenWhileIdle, shelterHome } from "./prompt.js";
+import { ask, askHidden, confirm, isPairingLink, listenWhileIdle, shelterHome } from "./prompt.js";
 
 loadEnv();
 
@@ -332,7 +332,7 @@ async function main() {
     console.log(sandboxed ? "Ctrl-C stops and forgets the sandbox." : "Ctrl-C stops; open accounts stay open until you run connect close ID.");
     const stopListening = listenWhileIdle("wc link> ", (line) => {
       if (!line) return;
-      if (!line.startsWith("wc:")) {
+      if (!isPairingLink(line)) {
         console.log("  Paste a WalletConnect link (it starts with wc:), or press Ctrl-C to stop.");
         return;
       }

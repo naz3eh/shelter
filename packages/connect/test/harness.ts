@@ -99,6 +99,8 @@ export class World {
   spent = new Map<string, bigint>();
   /** Swept back into the confidential balance, per asset id. */
   returned = new Map<string, bigint>();
+  /** ERC-20 transfers made by the transaction being applied (its receipt's logs). */
+  private transfers: NonNullable<Receipt["tokenTransfers"]> = [];
   /** Base fee for estimates; tests raise it to force top-ups. */
   maxFeePerGas = 7_000_000n;
 
@@ -285,6 +287,7 @@ export class World {
         this.allowances.set(key, this.allowances.get(key)! - amountIn);
         this.setBal(tokenIn, from, this.bal(tokenIn, from) - amountIn);
         this.setBal(tokenOut, recipient, this.bal(tokenOut, recipient) + amountIn * 3n);
+        this.transfers.push({ token: getAddress(tokenIn), from: getAddress(from), to: ROUTER }, { token: getAddress(tokenOut), from: ROUTER, to: getAddress(recipient) });
       }
       return null;
     }
@@ -299,6 +302,7 @@ export class World {
         if (this.bal(to, from) < amt) return "execution reverted: balance";
         if (!dry) {
           this.setBal(to, from, this.bal(to, from) - amt);
+          this.transfers.push({ token: getAddress(to), from: getAddress(from), to: getAddress(rcpt) });
           const dep = depositTo(rcpt);
           if (dep && dep.quote.request.depositType === "ORIGIN_CHAIN") {
             if (this.tokenOf(dep.quote.request.originAssetId) !== to || BigInt(dep.quote.amountIn) !== amt) throw new Error("BUG: wrong token deposit");
@@ -354,8 +358,10 @@ export class World {
     self.eth.set(from, eth - fee);
     self.nonces.set(from, tx.nonce! + 1);
     self.broadcasts++;
+    self.transfers = [];
     const why = self.apply(from, getAddress(tx.to!), tx.data, tx.value ?? 0n, false);
-    self.txs.set(hash, { raw, receipt: { status: why ? "reverted" : "success", blockNumber: 2000n + BigInt(self.txs.size), gasUsed, feeWei: fee } });
+    const tokenTransfers = why ? [] : self.transfers;
+    self.txs.set(hash, { raw, receipt: { status: why ? "reverted" : "success", blockNumber: 2000n + BigInt(self.txs.size), gasUsed, feeWei: fee, tokenTransfers } });
     return hash;
   }
 
@@ -444,7 +450,13 @@ export async function opened(r: Rig, budget = "5000000", gasWei?: string): Promi
 }
 
 /** Runs `fn` with a fresh engine after every Crash, as a restarted process would. */
-export async function untilDone<T>(r: Rig, fn: (e: ConnectEngine) => Promise<T>, maxRestarts = 10): Promise<{ value: T; crashes: number }> {
+export async function untilDone<T>(
+  r: Rig,
+  fn: (e: ConnectEngine) => Promise<T>,
+  maxRestarts = 10,
+  /** Runs before each restart; a test uses it to break the engine on purpose. */
+  onRestart?: () => Promise<void>,
+): Promise<{ value: T; crashes: number }> {
   let crashes = 0;
   for (;;) {
     try {
@@ -453,6 +465,7 @@ export async function untilDone<T>(r: Rig, fn: (e: ConnectEngine) => Promise<T>,
       if (!(e instanceof Crash) || ++crashes > maxRestarts) throw e;
       r.world.faults.dead = false;
       r.world.clock.advance(11 * 60_000); // a dead burner runner's lease expires
+      await onRestart?.();
     }
   }
 }

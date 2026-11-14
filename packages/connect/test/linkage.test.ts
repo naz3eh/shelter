@@ -94,6 +94,29 @@ describe("linkage check: transactions", () => {
     expect(codes(check("eth_sendTransaction", tx({ to: ROUTER, data })))).toEqual(["block:calldata_linked"]);
   });
 
+  it("blocks a NEAR account id as UTF-16 (either byte order) or written as hex text in calldata", () => {
+    const utf16le = Buffer.from("memo carol.near", "utf16le").toString("hex");
+    const utf16be = Buffer.from(Buffer.from("carol.near", "utf16le").swap16()).toString("hex");
+    const hexText = toHex(`memo:${toHex("carol.near").slice(2)}`).slice(2);
+    const hexTextUpper = toHex(`memo:${toHex("carol.near").slice(2).toUpperCase()}`).slice(2);
+    for (const body of [utf16le, utf16be, hexText, hexTextUpper]) {
+      expect(codes(check("eth_sendTransaction", tx({ to: ROUTER, data: `0xabcdef01${body}` }))), body).toEqual(["block:calldata_linked"]);
+    }
+  });
+
+  it("blocks a linked address written as a string inside calldata", () => {
+    const data = `0xabcdef01${toHex(`refund to ${MAIN}`).slice(2)}` as const;
+    const f = check("eth_sendTransaction", tx({ to: ROUTER, data }));
+    expect(codes(f)).toEqual(["block:calldata_linked"]);
+    expect(f[0]!.message).toContain("your main wallet");
+  });
+
+  it("does not see an address split into pieces at separate places (documented limit)", () => {
+    const h = MAIN.slice(2).toLowerCase();
+    const data = `0xabcdef01${h.slice(0, 20)}${"00".repeat(32)}${h.slice(20)}` as const;
+    expect(check("eth_sendTransaction", tx({ to: ROUTER, data }))).toEqual([]);
+  });
+
   it("does not block on its own address", () => {
     const data = encodeFunctionData({ abi: erc20Abi, functionName: "approve", args: [SELF, 5n] });
     expect(check("eth_sendTransaction", tx({ to: TOKEN, data }))).toEqual([]);
@@ -129,6 +152,18 @@ describe("linkage check: messages and typed data", () => {
     const raw = `0xff00${MAIN.slice(2)}` as const;
     expect(messageText(raw)).toBe(raw);
     expect(codes(check("personal_sign", [raw, SELF]))).toEqual(["block:message_linked"]);
+  });
+
+  it("blocks a message with the NEAR account as hex text or UTF-16", () => {
+    expect(codes(check("personal_sign", [stringToHex(`id ${toHex("carol.near").slice(2)}`), SELF]))).toEqual(["block:message_linked"]);
+    expect(codes(check("personal_sign", [`0x${Buffer.from("carol.near", "utf16le").toString("hex")}`, SELF]))).toEqual(["block:message_linked"]);
+  });
+
+  it("blocks typed data whose bytes value encodes the NEAR account or a linked address", () => {
+    const td = (memo: string) => ({ types: {}, primaryType: "Order", domain: { name: "X", chainId: 8453 }, message: { maker: SELF, memo } });
+    expect(codes(check("eth_signTypedData_v4", [SELF, td(toHex("to carol.near"))]))).toEqual(["block:typed_data_linked"]);
+    expect(codes(check("eth_signTypedData_v4", [SELF, td(toHex(`to ${MAIN}`))]))).toEqual(["block:typed_data_linked"]);
+    expect(check("eth_signTypedData_v4", [SELF, td(toHex("to dave.near"))])).toEqual([]);
   });
 
   it("blocks a sign-in for another domain and warns on another chain", () => {

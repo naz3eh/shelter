@@ -1,20 +1,22 @@
 # Status
 
-**2026-11-12 UTC**
+**2026-11-13 UTC**
 
-Backend session, branch `feat/connect`, not committed or pushed.
+Backend session, branch `feat/connect`, open as PR #10 (not merged).
 PRs #4 to #9 (G4, G5, G6, G9 and docs) are merged into `main`.
 New this session: **Shelter Connect** (`packages/connect`), the confidential balance usable in any dapp over WalletConnect, one unlinked address per dapp.
 
 - Each dapp origin gets its own seed-derived address, funded by burner engine `fund` jobs (new action kind) from the confidential balance, with gas and ETH value topped up just in time.
 - A linkage check refuses any request that names the user's linked wallets, NEAR accounts or other Shelter addresses, in recipients, calldata, messages or typed data, before the user is asked.
-- `close` sweeps every 1Click-listed Base token and the remaining ETH back into the confidential balance and retires the address; crash-tested at all 70 outside calls.
+- `close` sweeps every 1Click-listed Base token and the remaining ETH back into the confidential balance and retires the address; crash-tested at all 72 outside calls, and a committed broken-engine run shows the test catches a re-signed sweep.
 - CLI: `connect link`, `connect start [wc:URI]`, `connect list/show/fund/top-up/close`.
 - Live (2026-11-12, nothing funded): paired with Reown's AppKit lab over the real relay (Verify: VALID); message and typed-data signatures accepted by the dapp; a typed-data request naming a linked wallet blocked before approval.
 - Live finding: dapps estimate gas from the address before asking the wallet, so the opening budget must hold what will be spent; just-in-time top-ups are the fallback. Docs and CLI wording updated.
 - Live funded (2026-11-12, mainnet): Uniswap on Base from a 1 USDC budget; approval, permit and a 0.5 USDC swap; a send to the linked main wallet blocked; close swept USDC and ETH back and retired the address. Links in `docs/backend/CONNECT.md`.
 - Fixed from that run: `/v0/status` nulls broke the deposit watcher; `Quote.deadline` now means the requested cutoff (1Click refunds after it), not the 3-day address expiry; `connect list/show` no longer need `--account`.
 - Added after it: the running wallet takes pasted `wc:` links (`wc link>` prompt; tested over the real relay with a WalletConnect dapp client); `near balance`; request records keep the dapp's params; `demo record --connect` and a replay that re-checks Connect sessions offline (today's run: 28 checks pass; tampered copies fail); the replay now binds quote fields to their signed response and reports malformed signatures instead of crashing; README judge path and NEAR section; threat model limits.
+
+- Review fixes (2026-11-13, PR #10 review): the linkage check also reads NEAR ids as UTF-16 and hex text, addresses written as text inside calldata, and bytes values in typed data (split or obfuscated identities are a documented limit); the sweep approval lists unlisted tokens the address received; a pasted `wc:` link during a question pairs instead of declining; a missing Verify origin no longer passes the origin check; `docs/HACKATHON.md` refreshed from the live file; README judge step 4 runnable today.
 
 Previous update (2026-11-09): G4.2 Meteor-owned confidential balance, G6 burner engine, G9 recording and replay.
 
@@ -30,27 +32,27 @@ Previous update (2026-11-09): G4.2 Meteor-owned confidential balance, G6 burner 
 | G6 Burner engine | done (merged, PR #7; `fund` action local) | `packages/burner`: resumable jobs for burner actions and private-move payouts, scheduled starts, planner hand-off (`schedulePlan`), memory/SQLite/IndexedDB stores, Base client with L1 fee; CLI `vault` (incl. `recover`) and `burner` (`preview`, `new`, `payout`, `run`, ...). Live read-only run up to the first approval; 33 offline tests incl. crash matrices for both job kinds (mutation-checked). Not yet: mainnet run. See `docs/backend/BURNER.md` |
 | G7 NEAR AI explainer + Verified panel | **done** | live run 2026-11-06T07:07Z by the human: `pnpm --filter @shelter/cli explain --sample exposed` - real Intel TDX DCAP quotes verified, TCB UpToDate, nonce / RTMR3 / app_compose / response-signature checks all passed; code merged in PR #2 (`f8c1959`) |
 | G8 Web screens | in progress | Verified panel on `/`; other screens not started |
-| G9 `pnpm demo --dry-run` | done (merged, PR #8), waiting for the recording | Recorder (`demo record`, deposits saved by `near deposit`) and offline replay that re-verifies quote, NEP-413 and transaction signatures; tested on a real partial run and a tampered copy. Waiting for the recorded mainnet run |
+| G9 `pnpm demo --dry-run` | done; recording committed 2026-11-14 | Recorder (`demo record`, deposits saved by `near deposit`) and offline replay that re-verifies quote, NEP-413 and transaction signatures; tested on a real partial run and a tampered copy. `scripts/demo/recording.json` is the 2026-11-12 funded Connect run: 28 checks pass, tampered copies fail |
 | G10 README / LICENSE / threat model | in progress | README corrected (98.5, hashed fixture keys); threat model AI section and Intents client section added; other sections pending |
 | G11 Hosted demo | not started | - |
-| Shelter Connect | done, live funded run on mainnet 2026-11-12 (local, unreviewed) | `packages/connect`: per-dapp accounts, linkage check, WalletConnect bridge (Reown WalletKit), just-in-time funding through burner `fund` jobs, sweep and retire; 53 offline tests incl. a close crash matrix (mutation-checked). Live: paired with a real dapp, signatures and a linkage block verified. Live: funded Uniswap session, block and close on mainnet. See `docs/backend/CONNECT.md` |
+| Shelter Connect | done, live funded run on mainnet 2026-11-12 (local, unreviewed) | `packages/connect`: per-dapp accounts, linkage check, WalletConnect bridge (Reown WalletKit), just-in-time funding through burner `fund` jobs, sweep and retire; 61 offline tests incl. a close crash matrix and the broken-engine run that proves it bites. Live: paired with a real dapp, signatures and a linkage block verified. Live: funded Uniswap session, block and close on mainnet. See `docs/backend/CONNECT.md` |
 
 Timeline: G4 to G6 plus one approved mainnet run were due 2026-11-11, G9 by 2026-11-13.
 G4, G5, G6 and G9 are implemented; the mainnet run is waiting on the human.
 
 ## Build / typecheck / test
 
-Run 2026-11-12 on Node 26.12.1:
+Run 2026-11-13 on Node 26.12.1:
 
 - `pnpm install --frozen-lockfile` - clean
 - `pnpm -r typecheck` - 8 projects pass
 - `pnpm build` - passes (Next production build)
-- `pnpm -r test` - 334 tests pass (core 31, intents 146, keys 50, burner 41, connect 53, attest 13), no network calls
+- `pnpm -r test` - 356 tests pass (core 31, intents 146, keys 50, burner 42, connect 74, attest 13), no network calls
 - `connect link add/list/remove` and `connect list` run end to end against a scratch `SHELTER_HOME`; WalletKit initializes in Node in about 0.3 s
 
 ## Open PRs
 
-None open. PRs #4 to #9 are merged. Connect is on the local branch `feat/connect`, not pushed.
+PR #10 (`feat/connect`, Shelter Connect): changes requested on 2026-11-13; review fixes pushed, waiting for re-review. PRs #4 to #9 are merged.
 
 ## Blockers / what I need from a human
 
@@ -60,7 +62,7 @@ None open. PRs #4 to #9 are merged. Connect is on the local branch `feat/connect
 
 ## Next 3 tasks
 
-1. Decide whether to publish a recording (today's run, or a fresh one under a demo identity), then commit it to `scripts/demo/`.
+1. ~~Decide whether to publish a recording~~ done 2026-11-14: `scripts/demo/recording.json` committed (the 2026-11-12 run; names viraz.near and the linked main wallet, both already public).
 2. The burner payout mainnet run (human signs; about 0.3 USDC).
 3. Web UI for Connect and the submission (see the PR description).
 

@@ -43,6 +43,8 @@ export function askHidden(question: string): Promise<string> {
  * a line goes to the oldest open question, and only when none is open to the
  * idle handler. Two readers on one terminal would each see every keystroke.
  */
+export const isPairingLink = (line: string) => /^wc:/i.test(line);
+
 let shared: { rl: Interface; idlePrompt: string; questions: { text: string; resolve: (a: string) => void }[] } | undefined;
 
 export function listenWhileIdle(idlePrompt: string, onIdleLine: (line: string) => void): () => void {
@@ -61,9 +63,16 @@ export function listenWhileIdle(idlePrompt: string, onIdleLine: (line: string) =
   };
   rl.on("line", (raw) => {
     const line = raw.trim();
-    const q = s.questions.shift();
-    if (q) q.resolve(line);
-    else onIdleLine(line);
+    // A pairing link is never an answer: pasted while a question is open, it would
+    // silently answer (and so decline) that question and never pair.
+    if (isPairingLink(line) && s.questions.length) {
+      console.log("  That is a WalletConnect link, not an answer: pairing it. The question above is still open.");
+      onIdleLine(line);
+    } else {
+      const q = s.questions.shift();
+      if (q) q.resolve(line);
+      else onIdleLine(line);
+    }
     showPrompt();
   });
   showPrompt();
@@ -80,8 +89,11 @@ export function listenWhileIdle(idlePrompt: string, onIdleLine: (line: string) =
 /** Shows the oldest open question, or the idle prompt; call it again after printing a block of output. */
 export function showPrompt(): void {
   if (!shared) return;
+  // Redraw on a clean line: the previous prompt (and anything typed) may still be on it.
+  clearLine(process.stderr, 0);
+  cursorTo(process.stderr, 0);
   shared.rl.setPrompt(shared.questions[0]?.text ?? shared.idlePrompt);
-  shared.rl.prompt();
+  shared.rl.prompt(true);
 }
 
 export function ask(question: string): Promise<string> {
