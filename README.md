@@ -127,6 +127,7 @@ The fixture is the real recording (`scripts/demo/recording.json`) with one swap:
 - scroll down - see the before/after link graph, the dapp card with "Close and sweep back", the funding timeline (deposit, dapp funding, swap, sweep back), and the verified panel where every signature and transaction is re-checked offline against the recording.
 - paste your own addresses and a transaction or typed-data JSON into **Try the linkage check** - see blocked or allowed with the reason, computed live in your browser.
 - `NEXT_PUBLIC_SHELTER_LIVE=1` selects the live wallet source once `packages/connect` ships a browser entry; today it shows a typed stub that says so.
+- hosted: the recorded mode deploys to Vercel with the project root set to `apps/web` (`vercel.json` is included); set `NEAR_AI_API_KEY` in the project env or the TEE panel shows "Not verified". No other env vars are needed for the recorded session.
 
 ## Recorded mainnet runs
 
