@@ -2,6 +2,8 @@
 
 Shelter is a privacy remediation app. Your device scans your public wallets (EVM chains such as Base), computes a 0-100 exposure score, and plans a private move into NEAR Confidential Intents through the 1Click API, using a one-time burner wallet for each public action. A NEAR AI Cloud TEE model is used only to explain results, and its attestation is verified on device. Nothing is kept server-side: keys, the address book, scan data and the label lists all stay on the user's device.
 
+![Before and after Shelter Connect: today the dapp sees your main wallet linked to your other wallets; after Connect each dapp gets its own address, funded only by the confidential balance, with the link back blocked](docs/screenshots/before-after.png)
+
 ## Try it (judges)
 
 Every step below runs offline with no keys, funds or accounts unless it says otherwise.
